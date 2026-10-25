@@ -380,3 +380,17 @@ a {
         transition-duration: .01ms !important
     }
 }
+
+/* Team artwork integration — added without removing Zhanas’s design */
+.logo {width:52px;height:52px;object-fit:contain;border-radius:12px;background:#fff;}
+.hero-img {width:100%;height:auto;object-fit:cover;aspect-ratio: 16 / 9;}
+.feature-icon {width:46px;height:46px;object-fit:contain;border-radius:12px;display:block;}
+.media-gallery {margin:40px 0 30px;}
+.media-grid {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;}
+.media-card {background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;}
+.media-card img {display:block;width:100%;aspect-ratio:1 / 1;object-fit:cover;background:#fff;}
+.media-copy {padding:15px 18px 20px;}
+.media-copy h3 {margin:0 0 6px;}
+.media-copy p {margin:0;}
+@media(max-width:760px){.media-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:480px){.media-grid{grid-template-columns:1fr;}}
