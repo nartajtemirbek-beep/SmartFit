@@ -23,7 +23,12 @@ init_db()
 async def read_root(request: Request, message: str = ""):
     with closing(sqlite3.connect(DB_PATH)) as conn:
         users = conn.execute("SELECT id, name, goal, weight FROM users ORDER BY id DESC").fetchall()
-    return templates.TemplateResponse(request, "index.html", {"users": users, "message": message})
+        stats = conn.execute("SELECT COUNT(*), COUNT(DISTINCT LOWER(TRIM(goal))) FROM users").fetchone()
+        goal_counts = conn.execute(
+            "SELECT goal, COUNT(*) AS entries FROM users "
+            "GROUP BY LOWER(TRIM(goal)) ORDER BY entries DESC, goal ASC LIMIT 5"
+        ).fetchall()
+    return templates.TemplateResponse(request, "index.html", {"users": users, "message": message, "stats": stats, "goal_counts": goal_counts})
 
 @app.post("/add_user")
 async def add_user(name: str = Form(...), goal: str = Form(...), weight: float = Form(...)):
