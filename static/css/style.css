@@ -394,3 +394,13 @@ a {
 .media-copy p {margin:0;}
 @media(max-width:760px){.media-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:480px){.media-grid{grid-template-columns:1fr;}}
+
+/* End-term C5: live statistics from SQLite */
+.stats-section { margin: 34px 0; }
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 16px; }
+.stat-card { min-width: 0; }
+.stat-number { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800; line-height: 1.2; margin: 12px 0; color: #ff716e; }
+.goal-stats { list-style: none; margin: 12px 0 0; padding: 0; }
+.goal-stats li { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid rgba(160,160,160,.25); padding: 10px 0; overflow-wrap: anywhere; }
+.goal-stats strong { white-space: nowrap; }
+@media (max-width: 760px) { .stats-grid { grid-template-columns: 1fr; } }
