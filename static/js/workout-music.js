@@ -72,6 +72,7 @@
     status.textContent=settings.enabled?'ON':'OFF';
     status.classList.toggle('enabled',settings.enabled);
     stage.replaceChildren();
+    stage.classList.remove('tp-music-spotify');
     if(!settings.enabled)return;
     input.value=settings.urls[settings.provider]||'';
     const entry=getLink(settings.provider,input.value);
@@ -87,15 +88,20 @@
     }
     const frame=document.createElement('iframe');
     frame.title=services[settings.provider].label+' playlist player';
-    frame.src=entry.embed;
+    // The official Spotify compact embed is designed for 152px height.
+    // A taller iframe leaves a blank white section on some browser/service combinations.
+    const spotify=settings.provider==='spotify';
+    frame.src=spotify?entry.embed+'?theme=0':entry.embed;
     frame.loading='lazy';
     frame.referrerPolicy='strict-origin-when-cross-origin';
     frame.allow='encrypted-media; fullscreen; picture-in-picture';
     frame.width='100%';
-    frame.height=settings.provider==='apple'?'320':'250';
+    frame.height=spotify?'152':'320';
+    frame.setAttribute('scrolling','no');
     frame.style.border='0';
     frame.style.borderRadius='14px';
     frame.style.background='#171821';
+    stage.classList.toggle('tp-music-spotify',spotify);
     stage.append(frame);
     notice('Tap Play inside the official '+services[settings.provider].label+' player. Playback depends on your account, region and the service.');
   }
