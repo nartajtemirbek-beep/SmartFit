@@ -13,6 +13,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from pwdlib import PasswordHash
 from authlib.integrations.starlette_client import OAuth
 from hybrid_coach import classify_coach_intent, create_workout_plan, analyze_workout_progress
+from workout_variations import plan_for, next_variant, PLAN_NAMES
 
 ROOT=Path(__file__).resolve().parent
 DB_PATH=Path(os.environ.get('SMARTFIT_DB_PATH',str(ROOT/'smartfit_private.db')))
@@ -225,12 +226,6 @@ def save_profile(request:Request,token:str=Form(...),display_name:str=Form(...),
         if not prev or prev['current_weight_kg']!=current_weight_kg:c.execute('INSERT INTO weight_history(user_id,weight_kg) VALUES (?,?)',(user,current_weight_kg))
     return go('/dashboard')
 
-def plan_for(profile):
-    days=profile['training_days'];equipment=profile['equipment']
-    if equipment=='Gym':base=['Bodyweight squat or leg press','Seated row','Chest press','Light mobility']
-    else:base=['Chair squat','Wall push-up','Band or towel row','Gentle mobility']
-    return [{'day':f'Day {i+1}','focus':['Full body','Movement and mobility','Full body','Easy activity'][i%4],'exercises':base if i%2==0 else ['Comfortable walk','Gentle stretching','Balance practice']} for i in range(days)]
-
 @app.get('/dashboard',response_class=HTMLResponse)
 def dashboard(request:Request):
     user=require_login(request)
@@ -313,8 +308,11 @@ def generate_plan(request:Request,token:str=Form(...)):
     with db() as c:
         p=c.execute('SELECT * FROM profiles WHERE user_id=?',(user,)).fetchone()
         if not p:return go('/profile')
-        plan=plan_for(p)
-        c.execute('INSERT INTO workout_plans(user_id,title,details_json) VALUES (?,?,?)',(user,'Starter activity plan',json.dumps(plan)))
+        previous=c.execute('SELECT title FROM workout_plans WHERE user_id=? ORDER BY id DESC LIMIT 1',(user,)).fetchone()
+        variant=next_variant(previous['title'] if previous else None)
+        plan=plan_for(p,variant)
+        c.execute('INSERT INTO workout_plans(user_id,title,details_json) VALUES (?,?,?)',
+                  (user,f'SmartFit Variation {variant+1}',json.dumps(plan)))
     return go('/workout-plan')
 
 def validate_workout(title,completed_on,exercise,sets,reps,notes):
@@ -610,6 +608,7 @@ def dashboard_context(request):
     cells=[None]*first+[(day,date(today.year,today.month,day).isoformat() in dates) for day in range(1,days+1)]
     achievements=[('First Workout',total>=1),('5 Workouts',total>=5),('10 Workouts',total>=10),('Weekly Consistency',thisweek>=p['training_days'])]
     return dict(p=p,sessions=sessions,reminders=reminders,plan=json.loads(plan['details_json']) if plan else None,
+                plan_variant=(int(plan['title'].rsplit(' ',1)[1]) if plan and plan['title'].startswith('SmartFit Variation ') and plan['title'].rsplit(' ',1)[1].isdigit() else 0),
                 total=total,thisweek=thisweek,today=today.isoformat(),calendar_title=today.strftime('%B %Y'),
                 calendar_cells=cells,achievements=achievements)
 
