@@ -10,14 +10,14 @@
 <div class="tp-layout">
   <section class="tp-panel" aria-labelledby="new-workout-title">
     <div class="tp-panel-heading"><h2 id="new-workout-title">Log a workout</h2><span class="tp-tag">Private</span></div>
-    <p class="tp-subtle">Record what you actually completed. Add as many exercises as needed, up to 12.</p>
+    <p class="tp-subtle">Choose from 47 exercises in 7 muscle groups. Add up to 12 exercises per workout.</p>
     <form action="/workouts" method="post" class="tp-workout-form">
       <input type="hidden" name="token" value="{{ csrf }}">
       <div class="tp-form-grid"><label>Session name<input type="text" name="title" placeholder="Full body A" maxlength="100" required></label>
       <label>Completed on<input type="date" name="completed_on" value="{{ today }}" max="{{ today }}" min="2000-01-01" required></label></div>
       <div class="tp-exercise-head"><h3>Exercises</h3><span>Sets × reps</span></div>
       <div class="tp-exercise-list" data-exercise-list>
-        <div class="tp-exercise-row"><label>Exercise<input type="text" name="exercise" placeholder="Chair squat" maxlength="100" required></label><label>Sets<input type="number" name="sets" min="1" max="20" value="2" required></label><label>Reps<input type="number" name="reps" min="1" max="100" value="10" required></label><button type="button" data-remove-exercise class="tp-icon-btn" aria-label="Remove exercise" title="Remove exercise">×</button></div>
+        <div class="tp-exercise-row"><label>Muscle group<select data-muscle-group required><option value="">Choose muscle group</option></select></label><label>Exercise<select name="exercise" data-exercise-select required><option value="">Choose exercise</option></select></label><label>Sets<input type="number" name="sets" min="1" max="20" value="2" required></label><label>Reps<input type="number" name="reps" min="1" max="100" value="10" required></label><label>Weight (kg)<input type="number" name="weight" min="0" max="1000" step="0.5" placeholder="Optional"></label><button type="button" data-remove-exercise class="tp-icon-btn" aria-label="Remove exercise">×</button></div>
       </div>
       <button type="button" class="tp-add-btn" data-add-exercise>＋ Add exercise</button>
       <label class="tp-notes-label">Session notes (optional)<textarea name="notes" rows="3" maxlength="300" placeholder="How did it feel?"></textarea></label>
@@ -31,14 +31,14 @@
       {% for s in sessions %}
       <article class="tp-session">
         <div class="tp-session-head"><div><span class="tp-date">{{ s.completed_on }}</span><h3>{{ s.title }}</h3></div><span class="tp-session-count">{{ s.exercises|length }} exercise{% if s.exercises|length != 1 %}s{% endif %}</span></div>
-        <ul class="tp-session-exercises">{% for e in s.exercises %}<li><span>{{ e.exercise }}</span><b>{{ e.sets }} × {{ e.reps }}</b></li>{% endfor %}</ul>
+        <ul class="tp-session-exercises">{% for e in s.exercises %}<li><span>{{ e.exercise }}</span><b>{{ e.sets }} × {{ e.reps }}{% if e.weight_kg is not none %} · {{ e.weight_kg|round(1) }} kg{% endif %}</b></li>{% endfor %}</ul>
         {% if s.notes %}<p class="tp-session-notes">{{ s.notes }}</p>{% endif %}
         <div class="tp-session-actions"><details class="tp-edit"><summary>Edit session</summary>
           <form method="post" action="/workouts/{{ s.id }}/edit" class="tp-workout-form tp-edit-form">
             <input type="hidden" name="token" value="{{ csrf }}">
             <div class="tp-form-grid"><label>Session name<input name="title" maxlength="100" value="{{ s.title }}" required></label><label>Date<input type="date" name="completed_on" value="{{ s.completed_on }}" min="2000-01-01" max="{{ today }}" required></label></div>
             <div class="tp-exercise-list" data-exercise-list>
-              {% for e in s.exercises %}<div class="tp-exercise-row"><label>Exercise<input name="exercise" value="{{ e.exercise }}" maxlength="100" required></label><label>Sets<input type="number" name="sets" value="{{ e.sets }}" min="1" max="20" required></label><label>Reps<input type="number" name="reps" value="{{ e.reps }}" min="1" max="100" required></label><button type="button" data-remove-exercise class="tp-icon-btn" aria-label="Remove exercise" title="Remove exercise">×</button></div>{% endfor %}
+              {% for e in s.exercises %}<div class="tp-exercise-row" data-previous-exercise="{{ e.exercise|e }}"><label>Muscle group<select data-muscle-group required><option value="">Choose muscle group</option></select></label><label>Exercise<select name="exercise" data-exercise-select required><option value="">Choose exercise</option></select></label><label>Sets<input type="number" name="sets" min="1" max="20" value="{{ e.sets }}" required></label><label>Reps<input type="number" name="reps" min="1" max="100" value="{{ e.reps }}" required></label><label>Weight (kg)<input type="number" name="weight" min="0" max="1000" step="0.5" value="{{ e.weight_kg if e.weight_kg is not none else '' }}"></label><button type="button" data-remove-exercise class="tp-icon-btn" aria-label="Remove exercise">×</button></div>{% endfor %}
             </div>
             <button type="button" class="tp-add-btn" data-add-exercise>＋ Add exercise</button>
             <label class="tp-notes-label">Notes<textarea name="notes" rows="2" maxlength="300">{{ s.notes or '' }}</textarea></label>
@@ -52,6 +52,14 @@
     {% else %}<div class="tp-empty"><span aria-hidden="true">◈</span><h3>No workouts logged yet</h3><p>Your first workout will appear here after you save it.</p></div>{% endif %}
   </section>
 </div>
-<template id="tp-exercise-template"><div class="tp-exercise-row"><label>Exercise<input type="text" name="exercise" placeholder="Exercise name" maxlength="100" required></label><label>Sets<input type="number" name="sets" min="1" max="20" value="2" required></label><label>Reps<input type="number" name="reps" min="1" max="100" value="10" required></label><button type="button" data-remove-exercise class="tp-icon-btn" aria-label="Remove exercise" title="Remove exercise">×</button></div></template>
-<script src="/static/js/tracker.js?v=1" defer></script>
-{% endblock %}
+<template id="tp-exercise-template"><div class="tp-exercise-row"><label>Muscle group<select data-muscle-group required><option value="">Choose muscle group</option></select></label><label>Exercise<select name="exercise" data-exercise-select required><option value="">Choose exercise</option></select></label><label>Sets<input type="number" name="sets" min="1" max="20" value="2" required></label><label>Reps<input type="number" name="reps" min="1" max="100" value="10" required></label><label>Weight (kg)<input type="number" name="weight" min="0" max="1000" step="0.5" placeholder="Optional"></label><button type="button" data-remove-exercise class="tp-icon-btn" aria-label="Remove exercise">×</button></div></template>
+<script src="/static/js/exercise-library.js?v=1" defer></script>
+<style>
+.tp-exercise-row,.tp-edit-form .tp-exercise-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(145px,1.2fr) 60px 60px 84px 30px;gap:8px;align-items:end;background:#24232d;border:1px solid #3c3845;border-radius:13px;padding:12px}
+.tp-exercise-row label{min-width:0}
+.tp-exercise-row select,.tp-exercise-row input,.tp-edit-form .tp-exercise-row select,.tp-edit-form .tp-exercise-row input{min-width:0;width:100%;height:41px;padding:8px;background:#13141a;color:#f5f4fa;border:1px solid #49444f;border-radius:9px;font-size:12px}
+.tp-exercise-row select:focus-visible{outline:2px solid #ff8993;outline-offset:1px}
+.tp-exercise-row [data-remove-exercise]{height:41px}
+@media(max-width:1350px){.tp-exercise-row,.tp-edit-form .tp-exercise-row{grid-template-columns:repeat(2,minmax(0,1fr))}.tp-exercise-row [data-remove-exercise]{grid-column:span 2;justify-self:end;width:42px}}
+@media(max-width:650px){.tp-exercise-row label:nth-of-type(1),.tp-exercise-row label:nth-of-type(2){grid-column:span 2}}
+</style>{% endblock %}
