@@ -395,6 +395,51 @@ async def chat(request:Request,token:str=Form(...),question:str=Form(...)):
     else:reply='I can help with general questions about workouts, rest, progress tracking, and using SmartFit. For individual health concerns, speak with a qualified professional.'
     return render(request,'chat.html',question=q,reply=reply)
 
+@app.get('/api/food/barcode/{code}')
+async def barcode_product(request:Request, code:str):
+    """Read public product-label information; never accept arbitrary URLs."""
+    require_login(request)
+    if not (code.isascii() and code.isdigit() and 8 <= len(code) <= 14):
+        raise HTTPException(400, 'Enter a valid barcode (8 to 14 digits)')
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=12.0, follow_redirects=False) as client:
+            response=await client.get(
+                f'https://world.openfoodfacts.org/api/v2/product/{code}.json',
+                params={'fields':'code,product_name,brands,quantity,nutriments,nutrition_data_per,product_quantity,serving_size'},
+                headers={'User-Agent':'SmartFitEducation/1.0 (https://smartfit-todi.onrender.com)'}
+            )
+            response.raise_for_status()
+            payload=response.json()
+    except (httpx.HTTPError, ValueError):
+        raise HTTPException(502, 'Product database is temporarily unavailable')
+    if payload.get('status') != 1 or not isinstance(payload.get('product'),dict):
+        raise HTTPException(404, 'Product not found. Try another barcode or check the packaging.')
+    p=payload['product']
+    n=p.get('nutriments') if isinstance(p.get('nutriments'),dict) else {}
+    def numeric(key):
+        value=n.get(key)
+        if isinstance(value,bool) or not isinstance(value,(int,float)):return None
+        return round(float(value),2) if 0 <= value < 100000 else None
+    calories=numeric('energy-kcal_100g')
+    if calories is None:
+        kj=numeric('energy-kj_100g')
+        if kj is not None:calories=round(kj/4.184,1)
+    return JSONResponse({
+        'code':code,
+        'name':str(p.get('product_name') or 'Unnamed product')[:160],
+        'brand':str(p.get('brands') or '')[:120],
+        'quantity':str(p.get('quantity') or '')[:70],
+        'per100g':{
+            'calories':calories,
+            'protein':numeric('proteins_100g'),
+            'fat':numeric('fat_100g'),
+            'carbohydrates':numeric('carbohydrates_100g')
+        },
+        'source':'Open Food Facts — community-submitted product information',
+        'source_url':f'https://world.openfoodfacts.org/product/{code}'
+    })
+
 @app.get('/meal',response_class=HTMLResponse)
 def meal_page(request:Request):require_login(request);return render(request,'meal.html',result=None,error=None)
 
