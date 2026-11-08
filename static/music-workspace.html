@@ -34,6 +34,8 @@ html,body{height:100%;margin:0;background:#0e0f14;color:var(--text);font-family:
 .dock-iframe{width:100%;border-radius:12px;overflow:hidden;background:#15161c}
 .dock-iframe:empty{display:none}
 .dock-iframe iframe{display:block;width:100%;max-width:100%;border:0;border-radius:12px;background:#15161c}
+/* Quiet burgundy appearance: tone down Spotify artwork-derived bright red without altering playback. */
+.dock-iframe iframe[src*="open.spotify.com/embed/"]{filter:brightness(.82) saturate(.7)}
 .dock-controls{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .dock-controls button,.dock-controls a{font:inherit;font-size:11px;color:#ffc0c9;background:transparent;border:0;padding:5px 0;cursor:pointer;text-decoration:none}
 .dock-controls button:hover,.dock-controls a:hover{text-decoration:underline}
