@@ -12,9 +12,6 @@
   const toggle=document.getElementById('dock-toggle');
   const chevron=document.getElementById('dock-chevron');
   const power=document.getElementById('dock-power');
-  const providerInput=document.getElementById('dock-provider');
-  const urlInput=document.getElementById('dock-url');
-  const save=document.getElementById('dock-save');
   const iframeHost=document.getElementById('dock-frame');
   const message=document.getElementById('dock-message');
   const caption=document.getElementById('dock-caption');
@@ -40,9 +37,6 @@
     }
   }catch(_){}
 
-  function persist(){
-    try{localStorage.setItem(key,JSON.stringify({provider,urls}));}catch(_){}
-  }
   function valid(raw,name){
     if(typeof raw!=='string'||!raw.trim())return null;
     let u;
@@ -88,8 +82,6 @@
     chevron.style.transform=open?'rotate(0deg)':'rotate(180deg)';
   }
   function paint(){
-    providerInput.value=provider;
-    urlInput.value=urls[provider]||'';
     power.setAttribute('aria-label',enabled?'Turn music off':'Turn music on');
     state.textContent=enabled?'Music ON · Press Play in the player':'Music OFF';
     caption.textContent=services[provider]+(enabled?' · Workout playlist':' · Off');
@@ -101,13 +93,13 @@
     if(!enabled){
       iframeHost.replaceChildren();
       activeEmbed='';
-      announce('Music is off. Turn it back on to open your saved playlist.');
+      announce('Music is off. Use the power button to turn it on.');
       return;
     }
     if(!entry){
       iframeHost.replaceChildren();
       activeEmbed='';
-      announce('Paste your Spotify, Apple Music or YouTube Music playlist link, then press Save.');
+      announce('Choose and save a playlist in Workout Tracker, then reopen Music Mode.');
       return;
     }
     if(!entry.embed){
@@ -134,29 +126,6 @@
   }
   toggle.addEventListener('click',()=>showExpanded(!expanded));
   power.addEventListener('click',()=>{enabled=!enabled;paint();});
-  providerInput.addEventListener('change',()=>{
-    if(!services[providerInput.value])return;
-    provider=providerInput.value;
-    persist();
-    paint();
-  });
-  save.addEventListener('click',()=>{
-    const raw=urlInput.value.trim();
-    if(!raw){
-      delete urls[provider];persist();paint();
-      announce('Saved playlist cleared.');
-      return;
-    }
-    const entry=valid(raw,provider);
-    if(!entry){
-      announce('Enter a valid playlist, album or song link from '+services[provider]+'.',true);
-      return;
-    }
-    urls[provider]=entry.url;
-    persist();
-    paint();
-    announce('Saved in this browser. Tap Play in the official player.');
-  });
   exit.addEventListener('click',()=>{
     let target='/workouts';
     try{
