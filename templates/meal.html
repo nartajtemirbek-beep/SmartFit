@@ -33,7 +33,7 @@
     <div class="barcode-values food-total-metrics"></div>
     <p class="muted nutrition-note">Reference information only, not a personal nutrition recommendation.</p>
   </div>
-  <p class="muted nutrition-note">The model runs on your device, with no paid API. First use downloads a large model. It ranks whole-image similarity and cannot reliably identify every ingredient, measure weight, or calculate actual nutrition from a photo. For verified products, use the barcode scanner below.</p>
+  <p class="muted nutrition-note">The model runs on your device, with no paid API. First use may download a large model. Later scans can use the browser cache if the browser keeps it. It ranks whole-image similarity and cannot reliably identify every ingredient, measure weight, or calculate actual nutrition from a photo. For verified products, use the barcode scanner below.</p>
 </section>
 <section class="panel nutrition-panel" aria-labelledby="barcode-title">
   <div class="nutrition-section-title"><span class="nutrition-section-icon">02</span><div><h2 id="barcode-title">Product Barcode Scanner</h2><p class="muted">Find packaged food by its barcode and view community-submitted label information from Open Food Facts.</p></div></div>
@@ -115,6 +115,6 @@
 .food-camera-input{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden!important;clip-path:inset(50%)}
 .food-camera-label:focus-within{outline:2px solid #ff8993}
 </style>
-<script type="module" src="/static/js/general-food-scanner.js?v=4"></script>
+<script type="module" src="/static/js/general-food-scanner.js?v=5"></script>
 <script defer src="/static/js/barcode-scanner.js?v=3"></script>
 {% endblock %}
