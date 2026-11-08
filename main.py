@@ -440,6 +440,61 @@ async def barcode_product(request:Request, code:str):
         'source_url':f'https://world.openfoodfacts.org/product/{code}'
     })
 
+# Food photo predictions are only search hints, never nutrient measurements.
+# A user must select a labelled product before its reference values appear.
+_FOOD_REF_CACHE = {}
+
+@app.get('/api/food/reference')
+async def food_reference(request:Request, q:str):
+    require_login(request)
+    import re, time, httpx
+    query=' '.join(q.lower().replace('_',' ').strip().split())
+    if not (2 <= len(query) <= 65) or not re.fullmatch(r'[a-z0-9 .\-]+',query):
+        raise HTTPException(400,'Invalid food name')
+    now=time.monotonic()
+    cached=_FOOD_REF_CACHE.get(query)
+    if cached and now-cached[0] < 3600:
+        return JSONResponse({'items':cached[1], 'query':query})
+    # Avoid hitting Open Food Facts search rate limits on every scan.
+    if len(_FOOD_REF_CACHE)>100:
+        _FOOD_REF_CACHE.clear()
+    try:
+        async with httpx.AsyncClient(timeout=13.0,follow_redirects=False) as client:
+            res=await client.get('https://world.openfoodfacts.org/cgi/search.pl',
+                params={'search_terms':query,'search_simple':1,'action':'process',
+                        'json':1,'page_size':15,
+                        'fields':'code,product_name,product_name_en,brands,nutriments'},
+                headers={'User-Agent':'SmartFitEducation/1.0 (https://smartfit-todi.onrender.com)'})
+            res.raise_for_status()
+            raw=res.json()
+    except (httpx.HTTPError,ValueError):
+        raise HTTPException(502,'Nutrition reference database is temporarily unavailable')
+    def number(n,key):
+        value=n.get(key)
+        if isinstance(value,bool) or not isinstance(value,(int,float)) or not 0<=value<=10000:
+            return None
+        return round(float(value),1)
+    rows=[]
+    for p in raw.get('products',[]) if isinstance(raw.get('products'),list) else []:
+        if not isinstance(p,dict):continue
+        code=str(p.get('code') or '')
+        if not(code.isascii() and code.isdigit() and 8<=len(code)<=14):continue
+        name=str(p.get('product_name_en') or p.get('product_name') or '').strip()
+        if not name:continue
+        nutrients=p.get('nutriments') if isinstance(p.get('nutriments'),dict) else {}
+        energy=number(nutrients,'energy-kcal_100g')
+        if energy is None:
+            kj=number(nutrients,'energy-kj_100g')
+            if kj is not None:energy=round(kj/4.184,1)
+        macros={'calories':energy,'protein':number(nutrients,'proteins_100g'),
+                'fat':number(nutrients,'fat_100g'),'carbohydrates':number(nutrients,'carbohydrates_100g')}
+        if not any(x is not None for x in macros.values()):continue
+        rows.append({'code':code,'name':name[:140], 'brand':str(p.get('brands') or '')[:70],
+                     'per100g':macros,'source_url':'https://world.openfoodfacts.org/product/'+code})
+        if len(rows)>=5:break
+    _FOOD_REF_CACHE[query]=(now,rows)
+    return JSONResponse({'items':rows,'query':query})
+
 @app.get('/meal',response_class=HTMLResponse)
 def meal_page(request:Request):require_login(request);return render(request,'meal.html',result=None,error=None)
 
