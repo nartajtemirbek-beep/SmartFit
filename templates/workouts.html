@@ -87,7 +87,7 @@
 </div>
 <template id="tp-exercise-template"><div class="tp-exercise-row"><label>Muscle group<select data-muscle-group required><option value="">Choose muscle group</option></select></label><label>Exercise<select name="exercise" data-exercise-select required><option value="">Choose exercise</option></select></label><label>Sets<input type="number" name="sets" min="1" max="20" value="2" required></label><label>Reps<input type="number" name="reps" min="1" max="100" value="10" required></label><label>Weight (kg)<input type="number" name="weight" min="0" max="1000" step="0.5" placeholder="Optional"></label><button type="button" data-remove-exercise class="tp-icon-btn" aria-label="Remove exercise">×</button></div></template>
 <script src="/static/js/exercise-library.js?v=1" defer></script>
-<script src="/static/js/workout-music.js?v=1" defer></script>
+<script src="/static/js/workout-music.js?v=2" defer></script>
 <style>
 /* Exercise picker: two clear full-width selectors above compact numeric inputs. */
 .tp-exercise-list{min-width:0}
@@ -152,9 +152,10 @@
 .tp-music-open{display:inline-flex;align-items:center;justify-content:center;color:#ffb0bc;text-decoration:none;border:1px solid #80515f;border-radius:10px;padding:11px 13px;font-size:12px;font-weight:750}
 .tp-music-message{font-size:12px;color:#bfb5c5;line-height:1.55;margin:0}
 .tp-music-message[data-error="true"]{color:#ffa1a8}
-.tp-music-player{width:100%;max-width:660px}
+.tp-music-player{width:100%;max-width:660px;min-width:0;border-radius:14px;overflow:hidden;background:#171821}
 .tp-music-player:empty{display:none}
-.tp-music-player iframe{display:block;max-width:100%}
+.tp-music-player.tp-music-spotify{height:152px}
+.tp-music-player iframe{display:block;width:100%;max-width:100%;vertical-align:top}
 .tp-music-footnote{color:#8e8999;font-size:11px;line-height:1.6;margin:15px 0 0}
 @media(max-width:650px){.tp-music-panel{padding:17px}.tp-music-heading{align-items:start}.tp-music-identity{gap:10px}.tp-music-symbol{flex-basis:42px;width:42px;height:42px}.tp-music-link-row,.tp-music-select-line{display:grid;grid-template-columns:1fr}.tp-music-save,.tp-music-open{width:100%}}
 </style>
