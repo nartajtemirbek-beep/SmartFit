@@ -1,6 +1,8 @@
 import { FOOD_CATALOG } from './general-food-catalog.js';
 
 const photoInput = document.querySelector('#food-photo');
+const photoCameraInput = document.querySelector('#food-camera-photo');
+let selectedPhotoFile = null;
 const photoPreview = document.querySelector('#food-preview');
 const photoImage = document.querySelector('#food-preview-img');
 const scanButton = document.querySelector('#scan-food');
@@ -114,19 +116,21 @@ function resetPhoto(){
   suggestions.hidden=true;
   suggestions.replaceChildren();
 }
-photoInput.addEventListener('change',()=>{
+function onPhotoChosen(file){
   resetPhoto();
-  const file=photoInput.files?.[0];
-  if(!file){photoPreview.hidden=true;setStatus('Choose a photo or add foods manually.');return;}
-  if(!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size>3_000_000){
-    photoInput.value='';photoPreview.hidden=true;
-    setStatus('Please use a JPG, PNG, or WebP photo under 3 MB.');return;
+  selectedPhotoFile = null;
+  if (!file) { photoPreview.hidden=true;setStatus('Choose a photo or add foods manually.');return; }
+  if (!file.type.startsWith('image/') || file.size>3_000_000){
+    photoPreview.hidden=true;setStatus('Please use an image under 3 MB.');return;
   }
+  selectedPhotoFile = file;
   imageUrl=URL.createObjectURL(file);
   photoImage.src=imageUrl;
   photoPreview.hidden=false;
   setStatus('Photo ready. Recognition happens locally in your browser.');
-});
+}
+photoInput.addEventListener('change',()=>onPhotoChosen(photoInput.files?.[0]));
+photoCameraInput.addEventListener('change',()=>onPhotoChosen(photoCameraInput.files?.[0]));
 scanButton.addEventListener('click',async()=>{
   if(!imageUrl){setStatus('Choose a photo first, or select a food manually below.');return;}
   const scan=requestId;
