@@ -8,7 +8,9 @@
 <section class="panel nutrition-panel" aria-labelledby="food-scanner-title">
   <div class="nutrition-section-title"><span class="nutrition-section-icon">01</span><div><h2 id="food-scanner-title">AI Photo — Common Foods</h2><p class="muted">Free CLIP model compares your image to 73 everyday foods, including rice, buckwheat, chicken, eggs and potatoes. Pick the correct foods before viewing reference nutrition.</p></div></div>
   <label for="food-photo">Meal photo (JPG, PNG, WebP — max 3 MB)</label>
-  <input id="food-photo" type="file" accept="image/jpeg,image/png,image/webp">
+  <input id="food-photo" type="file" accept="image/jpeg,image/png,image/webp,image/*">
+  <label for="food-camera-photo" class="food-camera-label">📷 Take a photo with camera</label>
+  <input id="food-camera-photo" type="file" accept="image/*" capture="environment" class="food-camera-input">
   <div id="food-preview" hidden><img id="food-preview-img" alt="Preview of your chosen food photo"></div>
   <button type="button" class="btn primary" id="scan-food">Identify common foods — free CLIP AI</button>
   <p id="food-status" role="status" aria-live="polite">Choose a photo or add foods manually.</p>
@@ -37,9 +39,9 @@
   <div class="nutrition-section-title"><span class="nutrition-section-icon">02</span><div><h2 id="barcode-title">Product Barcode Scanner</h2><p class="muted">Find packaged food by its barcode and view community-submitted label information from Open Food Facts.</p></div></div>
   <div class="barcode-actions">
     <button type="button" class="btn primary" id="barcode-camera-toggle">Scan using camera</button>
-    <label class="barcode-image-label" for="barcode-image">Or upload barcode photo<input id="barcode-image" type="file" accept="image/*"></label>
+    <label class="barcode-image-label" for="barcode-image">Or upload barcode photo<input id="barcode-image" type="file" accept="image/*"></label><label class="barcode-image-label" for="barcode-camera-photo">📷 Take barcode photo<input id="barcode-camera-photo" type="file" accept="image/*" capture="environment" class="food-camera-input"></label><div id="barcode-file-reader" hidden></div>
   </div>
-  <div id="barcode-camera-box" hidden><video id="barcode-video" autoplay muted playsinline aria-label="Barcode camera preview"></video><p class="muted">Keep the barcode clearly visible in the frame.</p></div>
+  <div id="barcode-camera-box" hidden><div id="barcode-camera-reader" aria-label="Live barcode camera scanner"></div><p class="muted">Keep the barcode clearly visible in the frame.</p></div>
   <form id="barcode-form" class="barcode-form">
     <label for="barcode-code">Barcode number</label>
     <div class="barcode-form-row"><input id="barcode-code" type="text" inputmode="numeric" pattern="[0-9]{8,14}" minlength="8" maxlength="14" placeholder="Enter the 8–14 digits" required><button class="btn primary" type="submit">Find product</button></div>
@@ -81,7 +83,7 @@
 .barcode-form-row{display:flex;gap:12px;margin-top:8px}
 .barcode-form-row input{flex:1;min-width:0}
 #barcode-camera-box{margin-bottom:20px}
-#barcode-video{display:block;width:min(100%,480px);max-height:310px;object-fit:cover;background:#0b0b0f;border-radius:14px}
+#barcode-camera-reader{width:min(100%,480px);min-height:220px;background:#0b0b0f;border-radius:14px;overflow:hidden}#barcode-camera-reader video{max-width:100%;border-radius:14px}
 .barcode-reference{border-bottom:1px solid #55414d;padding:10px 0 18px;margin-bottom:18px}
 #barcode-per100{display:flex;gap:10px 20px;flex-wrap:wrap;font-size:12px;color:#c9bac6;margin-top:10px}
 #barcode-quantity{max-width:210px;margin:8px 0 15px}
@@ -109,7 +111,10 @@
 .food-selection-row input[type=number]{max-width:180px;margin:8px 0 16px}
 .food-total{margin-top:24px;padding:19px;background:#272731;border-radius:14px;border:1px solid #59414e}
 .food-metric-grid .food-nutrient{padding:12px 7px}
+.food-camera-label{display:inline-flex;align-items:center;cursor:pointer;color:#ffe6eb;background:#51303d;border:1px solid #925366;border-radius:12px;padding:12px 16px;margin:0 0 17px;font-weight:700}
+.food-camera-input{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;overflow:hidden!important;clip-path:inset(50%)}
+.food-camera-label:focus-within{outline:2px solid #ff8993}
 </style>
-<script type="module" src="/static/js/general-food-scanner.js?v=2"></script>
-<script defer src="/static/js/barcode-scanner.js?v=1"></script>
+<script type="module" src="/static/js/general-food-scanner.js?v=3"></script>
+<script defer src="/static/js/barcode-scanner.js?v=2"></script>
 {% endblock %}
