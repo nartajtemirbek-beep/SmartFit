@@ -137,12 +137,30 @@ scanButton.addEventListener('click',async()=>{
   scanButton.disabled=true;
   suggestions.hidden=true;
   try{
-    setStatus('Loading CLIP model locally. The first download is large (about 150 MB) and may take a while…');
+    setStatus('Preparing CLIP model… Cached files can be reused; the first use may download the model.');
     if(!classifierPromise){
       classifierPromise=import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1')
-        .then(({pipeline,env})=>{
+        .then(async ({pipeline,env})=>{
           env.allowLocalModels=false;
-          return pipeline('zero-shot-image-classification','Xenova/clip-vit-base-patch32',{device:'wasm',dtype:'q8'});
+          // Transformers.js uses the browser Cache API; make caching explicit.
+          // Keep the default cache key so existing downloads remain reusable.
+          env.useBrowserCache=true;
+          env.useWasmCache=true;
+          // A browser may refuse persistent storage; the scanner still works.
+          try {
+            if (navigator.storage?.persist) await navigator.storage.persist();
+          } catch (_) {}
+          return pipeline('zero-shot-image-classification','Xenova/clip-vit-base-patch32',{
+            device:'wasm',dtype:'q8',
+            progress_callback: (progress)=>{
+              if(scan!==requestId) return;
+              if(progress?.status==='progress' && typeof progress.progress==='number'){
+                setStatus('Downloading required model file: '+Math.round(progress.progress)+'%…');
+              } else if(progress?.status==='ready'){
+                setStatus('Model files ready. Initializing AI…');
+              }
+            }
+          });
         })
         .catch(e=>{classifierPromise=null;throw e;});
     }
