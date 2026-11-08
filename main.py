@@ -440,8 +440,7 @@ async def barcode_product(request:Request, code:str):
         'source_url':f'https://world.openfoodfacts.org/product/{code}'
     })
 
-# Food photo predictions are only search hints, never nutrient measurements.
-# A user must select a labelled product before its reference values appear.
+# Photo recognition is a search hint only; nutrient values come from a selected reference food.
 _FOOD_REF_CACHE = {}
 
 @app.get('/api/food/reference')
@@ -449,61 +448,92 @@ async def food_reference(request:Request, q:str):
     require_login(request)
     import re, time, httpx
     query=' '.join(q.lower().replace('_',' ').strip().split())
-    if not (2 <= len(query) <= 65) or not re.fullmatch(r'[a-z0-9 .\-]+',query):
+    if not (2 <= len(query) <= 65) or not re.fullmatch(r'[a-z0-9 .-]+',query):
         raise HTTPException(400,'Invalid food name')
     now=time.monotonic()
     cached=_FOOD_REF_CACHE.get(query)
     if cached and now-cached[0] < 3600:
         return JSONResponse({'items':cached[1], 'query':query})
-    # Avoid hitting Open Food Facts search rate limits on every scan.
     if len(_FOOD_REF_CACHE)>100:
         _FOOD_REF_CACHE.clear()
-    # API v2 structured category search is more reliable than legacy full-text CGI.
-    # Food-101 names represent dish categories, so search by category rather than
-    # by package/product title. This is still only a reference product match.
-    category=query.replace(' ','-')
-    try:
-        async with httpx.AsyncClient(timeout=12.0,follow_redirects=False) as client:
-            res=await client.get('https://world.openfoodfacts.org/api/v2/search',
-                params={'categories_tags_en':category,'page_size':30,
-                        'fields':'code,product_name,product_name_en,brands,nutriments'},
-                headers={'User-Agent':'SmartFitEducation/1.0 (https://smartfit-todi.onrender.com; contact: nartajtemirbek@gmail.com)',
-                         'Accept':'application/json'})
-            if res.status_code == 429:
-                raise HTTPException(503,'Nutrition database is rate-limiting searches. Please retry later.')
-            if res.status_code in (403,503):
-                raise HTTPException(503,'Nutrition database is currently restricting requests. Please retry later.')
-            res.raise_for_status()
-            raw=res.json()
-    except HTTPException:
-        raise
-    except (httpx.TimeoutException,httpx.ConnectError):
-        raise HTTPException(503,'Cannot connect to nutrition database right now. Please retry later.')
-    except (httpx.HTTPError,ValueError):
-        raise HTTPException(502,'Nutrition database request failed. You can still use barcode lookup.')
-    def number(n,key):
-        value=n.get(key)
-        if isinstance(value,bool) or not isinstance(value,(int,float)) or not 0<=value<=10000:
+    def number(value):
+        if isinstance(value,bool) or not isinstance(value,(int,float)):
             return None
-        return round(float(value),1)
+        return round(float(value),1) if 0 <= value <= 10000 else None
     rows=[]
-    for p in raw.get('products',[]) if isinstance(raw.get('products'),list) else []:
-        if not isinstance(p,dict):continue
-        code=str(p.get('code') or '')
-        if not(code.isascii() and code.isdigit() and 8<=len(code)<=14):continue
-        name=str(p.get('product_name_en') or p.get('product_name') or '').strip()
-        if not name:continue
-        nutrients=p.get('nutriments') if isinstance(p.get('nutriments'),dict) else {}
-        energy=number(nutrients,'energy-kcal_100g')
-        if energy is None:
-            kj=number(nutrients,'energy-kj_100g')
-            if kj is not None:energy=round(kj/4.184,1)
-        macros={'calories':energy,'protein':number(nutrients,'proteins_100g'),
-                'fat':number(nutrients,'fat_100g'),'carbohydrates':number(nutrients,'carbohydrates_100g')}
-        if not any(x is not None for x in macros.values()):continue
-        rows.append({'code':code,'name':name[:140], 'brand':str(p.get('brands') or '')[:70],
-                     'per100g':macros,'source_url':'https://world.openfoodfacts.org/product/'+code})
-        if len(rows)>=5:break
+    # Open Food Facts can rate-limit all users sharing Render's public egress IP.
+    # The USDA FoodData Central public API is an independent free fallback.
+    try:
+        async with httpx.AsyncClient(timeout=9.0,follow_redirects=False) as client:
+            r=await client.get('https://world.openfoodfacts.org/api/v2/search',
+                params={'categories_tags_en':query.replace(' ','-'),'page_size':25,
+                        'fields':'code,product_name,product_name_en,brands,nutriments'},
+                headers={'User-Agent':'SmartFitEducation/1.0 (nartajtemirbek@gmail.com)','Accept':'application/json'})
+            if r.status_code==200:
+                payload=r.json()
+                for p in payload.get('products',[]) if isinstance(payload.get('products'),list) else []:
+                    if not isinstance(p,dict):continue
+                    code=str(p.get('code') or '')
+                    if not (code.isascii() and code.isdigit() and 8<=len(code)<=14):continue
+                    name=str(p.get('product_name_en') or p.get('product_name') or '').strip()
+                    if not name:continue
+                    n=p.get('nutriments') if isinstance(p.get('nutriments'),dict) else {}
+                    energy=number(n.get('energy-kcal_100g'))
+                    if energy is None:
+                        kj=number(n.get('energy-kj_100g'))
+                        if kj is not None:energy=round(kj/4.184,1)
+                    macros={'calories':energy,'protein':number(n.get('proteins_100g')),
+                            'fat':number(n.get('fat_100g')),'carbohydrates':number(n.get('carbohydrates_100g'))}
+                    if not any(v is not None for v in macros.values()):continue
+                    rows.append({'name':name[:140],'brand':str(p.get('brands') or '')[:70],
+                                 'per100g':macros,'source_url':'https://world.openfoodfacts.org/product/'+code,
+                                 'source':'Open Food Facts'})
+                    if len(rows)>=5:break
+    except (httpx.HTTPError,ValueError,TypeError):
+        logging.warning('Open Food Facts photo food reference unavailable, trying USDA fallback')
+    if not rows:
+        # DEMO_KEY is public and free but has strict shared rate limits (30/hour, 50/day).
+        # For reliability users can optionally configure their own free USDA_FDC_API_KEY on Render.
+        api_key=os.getenv('USDA_FDC_API_KEY','DEMO_KEY').strip() or 'DEMO_KEY'
+        try:
+            async with httpx.AsyncClient(timeout=12.0,follow_redirects=False) as client:
+                res=await client.get('https://api.nal.usda.gov/fdc/v1/foods/search',
+                    params={'api_key':api_key,'query':query,'pageSize':20,
+                            'dataType':['Survey (FNDDS)','Foundation','SR Legacy']},
+                    headers={'Accept':'application/json'})
+                if res.status_code==429:
+                    raise HTTPException(503,'Both nutrition databases are temporarily limiting requests. Try again later.')
+                res.raise_for_status()
+                payload=res.json()
+            for p in payload.get('foods',[]) if isinstance(payload.get('foods'),list) else []:
+                if not isinstance(p,dict):continue
+                nutrients=p.get('foodNutrients')
+                if not isinstance(nutrients,list):continue
+                nutr={}
+                for item in nutrients:
+                    if not isinstance(item,dict):continue
+                    nutrient_id=item.get('nutrientId')
+                    if nutrient_id is None and isinstance(item.get('nutrient'),dict):
+                        nutrient_id=item['nutrient'].get('id')
+                    try: nutrient_id=int(nutrient_id)
+                    except (TypeError,ValueError):continue
+                    value=number(item.get('value',item.get('amount')))
+                    if value is not None:nutr[nutrient_id]=value
+                macros={'calories':nutr.get(1008),'protein':nutr.get(1003),
+                        'fat':nutr.get(1004),'carbohydrates':nutr.get(1005)}
+                if not any(v is not None for v in macros.values()):continue
+                fdc_id=p.get('fdcId')
+                if not isinstance(fdc_id,int):continue
+                name=str(p.get('description') or '').strip()
+                if not name:continue
+                rows.append({'name':name[:140],'brand':'USDA reference food',
+                             'per100g':macros,'source_url':f'https://fdc.nal.usda.gov/food-details/{fdc_id}/nutrients',
+                             'source':'USDA FoodData Central'})
+                if len(rows)>=5:break
+        except HTTPException:
+            raise
+        except (httpx.HTTPError,ValueError,TypeError):
+            raise HTTPException(503,'Nutrition references are temporarily unavailable from both providers.')
     _FOOD_REF_CACHE[query]=(now,rows)
     return JSONResponse({'items':rows,'query':query})
 
