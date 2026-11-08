@@ -1,158 +1,157 @@
-/* SmartFit Barcode Scanner — Open Food Facts lookup + adjustable product quantity. */
+/* SmartFit mobile-friendly barcode scanner (html5-qrcode + camera photo fallback). */
 (() => {
-  const form = document.querySelector('#barcode-form');
-  const codeInput = document.querySelector('#barcode-code');
-  const status = document.querySelector('#barcode-status');
-  const result = document.querySelector('#barcode-result');
-  const name = document.querySelector('#barcode-product-name');
-  const brand = document.querySelector('#barcode-brand');
-  const source = document.querySelector('#barcode-source');
-  const quantity = document.querySelector('#barcode-quantity');
-  const values = document.querySelector('#barcode-values');
-  const per100 = document.querySelector('#barcode-per100');
-  const cameraButton = document.querySelector('#barcode-camera-toggle');
-  const cameraBox = document.querySelector('#barcode-camera-box');
-  const video = document.querySelector('#barcode-video');
-  const scanImage = document.querySelector('#barcode-image');
-  let nutrients = null;
-  let stream = null;
-  let running = false;
-  let busy = false;
-  let detector = null;
+  const form=document.querySelector('#barcode-form');
+  const codeInput=document.querySelector('#barcode-code');
+  const status=document.querySelector('#barcode-status');
+  const result=document.querySelector('#barcode-result');
+  const name=document.querySelector('#barcode-product-name');
+  const brand=document.querySelector('#barcode-brand');
+  const source=document.querySelector('#barcode-source');
+  const quantity=document.querySelector('#barcode-quantity');
+  const values=document.querySelector('#barcode-values');
+  const per100=document.querySelector('#barcode-per100');
+  const cameraButton=document.querySelector('#barcode-camera-toggle');
+  const cameraBox=document.querySelector('#barcode-camera-box');
+  const readerElement=document.querySelector('#barcode-camera-reader');
+  const scanImage=document.querySelector('#barcode-image');
+  const cameraPhoto=document.querySelector('#barcode-camera-photo');
+  let nutrients=null;
+  let scanner=null;
+  let cameraActive=false;
+  let starting=false;
+  let handlingResult=false;
+  let libraryPromise=null;
 
-  function message(s) { status.textContent = s; }
-  function numericText(value) { return value === null || value === undefined ? 'N/A' : String(Math.round(value * 10) / 10); }
-  function renderNutrition() {
-    if (!nutrients) return;
-    const amount = Number(quantity.value);
-    const factor = Number.isFinite(amount) && amount > 0 && amount <= 10000 ? amount / 100 : null;
-    const fields = [['calories', 'Energy', 'kcal'], ['protein', 'Protein', 'g'], ['fat', 'Fat', 'g'], ['carbohydrates', 'Carbs', 'g']];
-    per100.replaceChildren();
-    values.replaceChildren();
-    for (const [key, title, unit] of fields) {
-      const reference = nutrients[key];
-      const cell = document.createElement('div');
-      cell.className = 'food-nutrient';
-      const label = document.createElement('small');
-      label.textContent = title;
-      const num = document.createElement('strong');
-      num.textContent = reference == null || factor == null ? 'N/A' : numericText(reference * factor);
-      const unitEl = document.createElement('small');
-      unitEl.textContent = unit;
-      cell.append(label, num, unitEl);
-      values.append(cell);
-
-      const refItem = document.createElement('span');
-      refItem.textContent = title + ': ' + numericText(reference) + ' ' + unit;
-      per100.append(refItem);
+  function message(text){status.textContent=text;}
+  function numericText(value){return value==null?'N/A':String(Math.round(value*10)/10);}
+  function renderNutrition(){
+    if(!nutrients)return;
+    const amount=Number(quantity.value);
+    const factor=Number.isFinite(amount)&&amount>0&&amount<=10000?amount/100:null;
+    per100.replaceChildren();values.replaceChildren();
+    for(const [key,title,unit] of [['calories','Energy','kcal'],['protein','Protein','g'],['fat','Fat','g'],['carbohydrates','Carbs','g']]){
+      const reference=nutrients[key];
+      const cell=document.createElement('div');cell.className='food-nutrient';
+      const label=document.createElement('small');label.textContent=title;
+      const num=document.createElement('strong');
+      num.textContent=reference==null||factor==null?'N/A':numericText(reference*factor);
+      const suffix=document.createElement('small');suffix.textContent=unit;
+      cell.append(label,num,suffix);values.append(cell);
+      const p=document.createElement('span');
+      p.textContent=title+': '+numericText(reference)+' '+unit;per100.append(p);
     }
   }
-  async function lookup(raw) {
-    const code = raw.trim().replace(/\s+/g, '');
-    if (!/^\d{8,14}$/.test(code)) { message('Enter the 8–14 digits printed under the barcode.'); return; }
-    message('Looking up product information…');
-    result.hidden = true;
-    nutrients = null;
-    try {
-      const response = await fetch('/api/food/barcode/' + encodeURIComponent(code), {headers: {'Accept':'application/json'}});
-      const data = await response.json();
-      if (!response.ok) { message(data.detail || 'Could not find this product.'); return; }
-      name.textContent = data.name;
-      brand.textContent = [data.brand, data.quantity].filter(Boolean).join(' · ') || 'Product details';
-      source.href = data.source_url;
-      nutrients = data.per100g;
-      quantity.value = '100';
-      renderNutrition();
-      result.hidden = false;
-      message('Product found. Check the label: database entries may be incomplete or outdated.');
-    } catch (e) {
-      console.error(e);
-      message('Could not connect to the product database. Please try again.');
+  async function lookup(raw){
+    const code=String(raw).trim().replace(/\s+/g,'');
+    if(!/^\d{8,14}$/.test(code)){message('Enter an 8–14 digit barcode.');return;}
+    message('Searching the product database…');
+    result.hidden=true;nutrients=null;
+    try{
+      const response=await fetch('/api/food/barcode/'+encodeURIComponent(code),{headers:{Accept:'application/json'}});
+      const data=await response.json();
+      if(!response.ok){message(data.detail||'Product was not found.');return;}
+      name.textContent=data.name;
+      brand.textContent=[data.brand,data.quantity].filter(Boolean).join(' · ')||'Product details';
+      source.href=data.source_url;
+      nutrients=data.per100g;
+      quantity.value='100';
+      renderNutrition();result.hidden=false;
+      message('Product found. Check the packaging for accurate label information.');
+    }catch(error){
+      console.error('Barcode lookup error',error);
+      message('Could not reach the product database. Try again.');
     }
   }
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    stopCamera();
+  function ensureLibrary(){
+    if(window.Html5Qrcode)return Promise.resolve(window.Html5Qrcode);
+    if(libraryPromise)return libraryPromise;
+    libraryPromise=new Promise((resolve,reject)=>{
+      const script=document.createElement('script');
+      script.src='https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      script.async=true;
+      script.onload=()=>window.Html5Qrcode?resolve(window.Html5Qrcode):reject(new Error('Scanner library unavailable'));
+      script.onerror=()=>reject(new Error('Scanner library download failed'));
+      document.head.append(script);
+    }).catch(e=>{libraryPromise=null;throw e;});
+    return libraryPromise;
+  }
+  async function stopCamera(){
+    const live=scanner;
+    cameraActive=false;starting=false;cameraButton.textContent='Scan using camera';
+    if(live){
+      scanner=null;
+      try{await live.stop();}catch(_){}
+      try{live.clear();}catch(_){}
+    }
+    cameraBox.hidden=true;
+  }
+  async function onDecoded(decoded){
+    if(handlingResult)return;
+    const code=String(decoded||'').replace(/\s+/g,'');
+    if(!/^\d{8,14}$/.test(code))return;
+    handlingResult=true;
+    codeInput.value=code;
+    await stopCamera();
+    await lookup(code);
+    handlingResult=false;
+  }
+  cameraButton.addEventListener('click',async()=>{
+    if(cameraActive||starting){await stopCamera();return;}
+    if(!navigator.mediaDevices?.getUserMedia){
+      message('Live camera requires a secure HTTPS browser with camera access. Use Take barcode photo or type the digits instead.');
+      return;
+    }
+    starting=true;cameraButton.textContent='Starting camera…';
+    try{
+      const Html5Qrcode=await ensureLibrary();
+      if(!starting)return;
+      cameraBox.hidden=false;
+      readerElement.replaceChildren();
+      const formats=window.Html5QrcodeSupportedFormats;
+      scanner=new Html5Qrcode('barcode-camera-reader',{formatsToSupport:[
+        formats.EAN_13,formats.EAN_8,formats.UPC_A,formats.UPC_E
+      ],verbose:false});
+      await scanner.start(
+        {facingMode:'environment'},
+        {fps:8,qrbox:{width:250,height:145},aspectRatio:1.777},
+        onDecoded,()=>{}
+      );
+      cameraActive=true;starting=false;
+      cameraButton.textContent='Stop camera';
+      message('Aim the camera at the barcode. Hold it steady in good light.');
+    }catch(error){
+      console.error('Camera start error',error);
+      await stopCamera();
+      message('Camera could not start. Allow camera access in your browser settings, or use Take barcode photo / manual entry.');
+    }
+  });
+  async function readBarcodeImage(file){
+    if(!file)return;
+    if(!file.type.startsWith('image/')||file.size>5_000_000){
+      message('Choose a barcode photo smaller than 5 MB.');return;
+    }
+    await stopCamera();
+    try{
+      const Html5Qrcode=await ensureLibrary();
+      const fileReader=new Html5Qrcode('barcode-file-reader',{verbose:false});
+      let decoded;
+      try{decoded=await fileReader.scanFile(file,false);}
+      finally{try{fileReader.clear();}catch(_){}}
+      await onDecoded(decoded);
+      if(!/^\d{8,14}$/.test(String(decoded||'')))message('No supported product barcode found. Enter the barcode number manually.');
+    }catch(error){
+      console.error('Barcode image error',error);
+      message('Could not read barcode from the image. Try a clearer photo or type the digits below.');
+    }
+  }
+  scanImage.addEventListener('change',async()=>{await readBarcodeImage(scanImage.files?.[0]);scanImage.value='';});
+  cameraPhoto.addEventListener('change',async()=>{await readBarcodeImage(cameraPhoto.files?.[0]);cameraPhoto.value='';});
+  form.addEventListener('submit',async(event)=>{
+    event.preventDefault();
+    await stopCamera();
     await lookup(codeInput.value);
   });
-  quantity.addEventListener('input', renderNutrition);
-
-  function stopCamera() {
-    running = false;
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    stream = null;
-    video.srcObject = null;
-    cameraBox.hidden = true;
-    cameraButton.textContent = 'Scan using camera';
-  }
-  async function detectFrame() {
-    if (!running || !detector) return;
-    if (!busy && video.readyState >= 2) {
-      busy = true;
-      try {
-        const matches = await detector.detect(video);
-        const code = matches.map(m => String(m.rawValue || '')).find(s => /^\d{8,14}$/.test(s));
-        if (code) {
-          codeInput.value = code;
-          stopCamera();
-          await lookup(code);
-          return;
-        }
-      } catch (e) { console.debug('Barcode scan frame failed',e); }
-      finally { busy = false; }
-    }
-    if (running) setTimeout(detectFrame, 250);
-  }
-  cameraButton.addEventListener('click', async () => {
-    if (running) { stopCamera(); return; }
-    if (!('BarcodeDetector' in window) || !navigator.mediaDevices?.getUserMedia) {
-      message('Camera barcode scanning is not available in this browser. Enter the barcode digits manually.');
-      return;
-    }
-    try {
-      const formats = await BarcodeDetector.getSupportedFormats();
-      const supported = ['ean_13','ean_8','upc_a','upc_e'].filter(f => formats.includes(f));
-      if (!supported.length) { message('Barcode formats are not supported here. Enter the code manually.'); return; }
-      detector = new BarcodeDetector({formats: supported});
-      stream = await navigator.mediaDevices.getUserMedia({audio:false, video:{facingMode:{ideal:'environment'}}});
-      video.srcObject = stream;
-      cameraBox.hidden = false;
-      cameraButton.textContent = 'Stop camera';
-      await video.play();
-      running = true;
-      message('Point the camera at a product barcode.');
-      detectFrame();
-    } catch (e) {
-      stopCamera();
-      message('Cannot access the camera. Allow camera access or enter the barcode manually.');
-    }
-  });
-  scanImage.addEventListener('change', async () => {
-    const file = scanImage.files?.[0];
-    if (!file) return;
-    if (!('BarcodeDetector' in window)) {
-      message('Barcode reading from images is not supported here. Enter the digits manually.');
-      return;
-    }
-    if (!file.type.startsWith('image/') || file.size > 5_000_000) {
-      message('Choose an image file smaller than 5 MB.');
-      return;
-    }
-    try {
-      const formats = await BarcodeDetector.getSupportedFormats();
-      const supported = ['ean_13','ean_8','upc_a','upc_e'].filter(f => formats.includes(f));
-      if (!supported.length) throw Error('No supported barcode format');
-      const reader = new BarcodeDetector({formats:supported});
-      const bitmap = await createImageBitmap(file);
-      let matches;
-      try { matches = await reader.detect(bitmap); } finally { bitmap.close(); }
-      const code = matches.map(m=>String(m.rawValue || '')).find(s=>/^\d{8,14}$/.test(s));
-      if (!code) { message('No readable barcode found in that image. Try a clearer photo or enter digits.'); return; }
-      codeInput.value=code;
-      await lookup(code);
-    } catch (e) { message('Could not read the barcode image. Enter the digits manually.'); }
-    finally { scanImage.value=''; }
-  });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) stopCamera(); });
-  window.addEventListener('pagehide', stopCamera);
+  quantity.addEventListener('input',renderNutrition);
+  document.addEventListener('visibilitychange',()=>{if(document.hidden&&cameraActive)void stopCamera();});
+  window.addEventListener('pagehide',()=>{void stopCamera();});
 })();
