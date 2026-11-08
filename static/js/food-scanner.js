@@ -34,7 +34,7 @@ async function showReferenceNutrition(foodLabel, slot, version) {
     const heading = document.createElement('h3');
     heading.textContent = 'Reference nutrition for similar products';
     const caution = document.createElement('p');
-    caution.textContent = 'These are Open Food Facts entries, NOT measured values of your photographed meal. Choose a similar product and verify its ingredients. Recipes and cooking methods may differ considerably.';
+    caution.textContent = 'These are reference food entries, NOT measurements of your photographed meal. Choose a similar food and verify its ingredients. Recipes and cooking methods may differ considerably.';
     const selector = document.createElement('select');
     selector.setAttribute('aria-label', 'Choose comparable product');
     data.items.forEach((item, i) => {
@@ -52,7 +52,7 @@ async function showReferenceNutrition(foodLabel, slot, version) {
     metrics.className='barcode-values';
     const source = document.createElement('a');
     source.className='nutrition-source'; source.target='_blank'; source.rel='noopener noreferrer';
-    source.textContent='View source entry — Open Food Facts ↗';
+    source.textContent='View original nutrition source ↗';
     const details = document.createElement('p');
     details.className='muted nutrition-note';
     const draw = () => {
@@ -70,7 +70,7 @@ async function showReferenceNutrition(foodLabel, slot, version) {
         cell.append(title,amount,suffix); metrics.append(cell);
       }
       source.href=selected.source_url;
-      details.textContent='Based on the selected product label per 100 g; not a nutrition estimate made by the AI. Missing data is shown as N/A.';
+      details.textContent='Reference values per 100 g from ' + (selected.source || 'a food database') + '. Not a direct photo measurement. Missing data is shown as N/A.';
     };
     selector.addEventListener('change',draw);
     weight.addEventListener('input',draw);
