@@ -18,7 +18,7 @@
       const m=u.pathname.match(/^\/(playlist|album|track)\/([a-zA-Z0-9]{10,30})\/?$/);
       if(!m)return null;
       return {name:'Spotify',url:'https://open.spotify.com/'+m[1]+'/'+m[2],
-        embed:'https://open.spotify.com/embed/'+m[1]+'/'+m[2]+'?theme=0',height:152};
+        embed:'https://open.spotify.com/embed/'+m[1]+'/'+m[2],height:152};
     }
     if(provider==='apple'){
       if(u.hostname!=='music.apple.com')return null;
