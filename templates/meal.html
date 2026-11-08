@@ -3,17 +3,35 @@
 <div class="intro nutrition-intro">
   <div class="eyebrow">NUTRITION · TWO FREE TOOLS</div>
   <h1>Food Scanner</h1>
-  <p>Choose how to identify food: a photo of a meal or a product barcode. Both tools work without paid AI keys.</p>
+  <p>Photo recognition with CLIP and a local everyday-food catalog, plus packaged-product barcode lookup. No paid AI keys needed.</p>
 </div>
 <section class="panel nutrition-panel" aria-labelledby="food-scanner-title">
-  <div class="nutrition-section-title"><span class="nutrition-section-icon">01</span><div><h2 id="food-scanner-title">AI Meal Photo</h2><p class="muted">Identify a possible dish with Food-101 and look up reference nutrition per 100 g for similar products. Check the match before using the values.</p></div></div>
-  <label for="food-photo">Meal photo (JPG, PNG or WebP, up to 3 MB)</label>
+  <div class="nutrition-section-title"><span class="nutrition-section-icon">01</span><div><h2 id="food-scanner-title">AI Photo — Common Foods</h2><p class="muted">Free CLIP model compares your image to 73 everyday foods, including rice, buckwheat, chicken, eggs and potatoes. Pick the correct foods before viewing reference nutrition.</p></div></div>
+  <label for="food-photo">Meal photo (JPG, PNG, WebP — max 3 MB)</label>
   <input id="food-photo" type="file" accept="image/jpeg,image/png,image/webp">
-  <div id="food-preview" hidden><img id="food-preview-img" alt="Preview of your meal"></div>
-  <button type="button" class="btn primary" id="scan-food">Identify food — free AI</button>
-  <p id="food-status" role="status" aria-live="polite">Choose a photo to begin.</p>
+  <div id="food-preview" hidden><img id="food-preview-img" alt="Preview of your chosen food photo"></div>
+  <button type="button" class="btn primary" id="scan-food">Identify common foods — free CLIP AI</button>
+  <p id="food-status" role="status" aria-live="polite">Choose a photo or add foods manually.</p>
   <div id="food-results" class="food-results" hidden aria-live="polite"></div>
-  <p class="muted nutrition-note">Food-101 recognizes 101 dish types. Photos stay in your browser. The separate nutrition reference comes from a selected food database entry, not from analysis of the photo.</p>
+
+  <div class="food-manual-block">
+    <h3>Confirm or add a food</h3>
+    <p class="muted">AI can mistake mixed dishes. Select the matching food, or find one yourself. You can add more than one ingredient.</p>
+    <label for="food-manual-search">Search 73 common foods</label>
+    <input id="food-manual-search" type="search" placeholder="Rice, chicken, eggs, buckwheat…">
+    <div id="food-manual-results" class="food-suggestion-list"></div>
+  </div>
+  <div id="food-selected" class="food-selected" hidden>
+    <h3>Selected foods — illustrative nutrition</h3>
+    <p class="muted nutrition-note">The local catalog uses rounded, approximate examples for typical preparations. It is not an official USDA data export or a measurement of your photographed meal. Ingredients, oil and recipes affect actual values.</p>
+    <div id="food-selected-list"></div>
+  </div>
+  <div id="food-total" class="food-total" hidden>
+    <h3>Combined reference values for selected amounts</h3>
+    <div class="barcode-values food-total-metrics"></div>
+    <p class="muted nutrition-note">Reference information only, not a personal nutrition recommendation.</p>
+  </div>
+  <p class="muted nutrition-note">The model runs on your device, with no paid API. First use downloads a large model. It ranks whole-image similarity and cannot reliably identify every ingredient, measure weight, or calculate actual nutrition from a photo. For verified products, use the barcode scanner below.</p>
 </section>
 <section class="panel nutrition-panel" aria-labelledby="barcode-title">
   <div class="nutrition-section-title"><span class="nutrition-section-icon">02</span><div><h2 id="barcode-title">Product Barcode Scanner</h2><p class="muted">Find packaged food by its barcode and view community-submitted label information from Open Food Facts.</p></div></div>
@@ -74,7 +92,24 @@
 .nutrition-source{display:inline-block;color:#ffabb5;font-weight:700;margin-top:12px}
 .nutrition-panel button:disabled{opacity:.55;cursor:wait}
 @media(max-width:650px){.barcode-values{grid-template-columns:repeat(2,minmax(0,1fr))}.barcode-form-row{flex-wrap:wrap}.barcode-form-row button{width:100%}}
+.food-manual-block{margin:26px 0 18px;padding:20px;border:1px solid #493744;border-radius:14px;background:#25202a}
+.food-manual-block h3,.food-selected h3,.food-total h3{margin:0 0 8px}
+.food-manual-block label{display:block;margin:12px 0 5px}
+.food-suggestion-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.food-suggestion{border:1px solid #744455;color:#ffe0e5;background:#392631;border-radius:11px;padding:10px 12px;display:flex;gap:9px;align-items:center;text-align:left}
+.food-suggestion span{color:#ffb3c0;font-size:11px}
+.food-suggestion:hover,.food-suggestion:focus-visible{background:#553040}
+.food-muted{font-size:12px;color:#c3b4c2;line-height:1.6}
+.food-selected{margin-top:24px}
+.food-selection-row{padding:18px;border:1px solid #59414e;border-radius:14px;background:#29212d;margin:13px 0}
+.food-selection-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}
+.food-selection-header strong,.food-selection-header small{display:block}
+.food-selection-header strong{margin-bottom:5px}
+.food-remove{border:1px solid #7b4354;border-radius:8px;background:#412633;color:#ffe0e6;padding:7px 12px}
+.food-selection-row input[type=number]{max-width:180px;margin:8px 0 16px}
+.food-total{margin-top:24px;padding:19px;background:#272731;border-radius:14px;border:1px solid #59414e}
+.food-metric-grid .food-nutrient{padding:12px 7px}
 </style>
-<script type="module" src="/static/js/food-scanner.js?v=3"></script>
+<script type="module" src="/static/js/general-food-scanner.js?v=1"></script>
 <script defer src="/static/js/barcode-scanner.js?v=1"></script>
 {% endblock %}
