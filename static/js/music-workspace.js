@@ -80,6 +80,7 @@
     expanded=open;
     dock.classList.toggle('is-collapsed',!open);
     body.setAttribute('aria-hidden',String(!open));
+    body.inert=!open;
     // Move the DOM subtree offscreen rather than destroy/replace the iframe.
     // Never use display:none for a currently playing music iframe.
     toggle.setAttribute('aria-expanded',String(open));
@@ -171,7 +172,8 @@
   // Only mirror its current page in the URL fragment for reload/bookmark use.
   const allowed=/^\/(dashboard|workouts|workout-plan|meal|progress|calendar|achievements|agent|profile)\/?(?:\?.*)?$/;
   function safeRoute(route){return typeof route==='string'&&allowed.test(route)?route:'/workouts';}
-  const initial=safeRoute(decodeURIComponent(location.hash.slice(1)||'/workouts'));
+  let initial='/workouts';
+  try{initial=safeRoute(decodeURIComponent(location.hash.slice(1)||'/workouts'));}catch(_){}
   workspace.src=initial;
   workspace.addEventListener('load',()=>{
     let documentInFrame,inner;
