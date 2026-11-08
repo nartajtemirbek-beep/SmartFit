@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#15161d">
+<title>SmartFit Music — Keep Playing</title>
+<link rel="icon" href="/static/img/favicon.svg?v=2" type="image/svg+xml">
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(circle at 70% 0%,#4a2635,#15161e 65%);color:#f6f2f5;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:650px;margin:0 auto;padding:25px 20px 30px}
+.head{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.symbol{display:grid;place-items:center;flex:none;width:52px;height:52px;background:#613243;border-radius:15px;font-size:26px;color:#ffa0af}
+h1{font-size:23px;letter-spacing:-.7px;margin:0}
+.sub{color:#c0b3c1;font-size:12px;margin:5px 0 0}
+.card{background:#24212a;border:1px solid #5a3c4e;border-radius:18px;padding:16px}
+#player{border-radius:13px;overflow:hidden;background:#171821}
+#player iframe{display:block;border:0;width:100%;max-width:100%;background:#171821;border-radius:13px}
+.note{font-size:12px;color:#cbbecb;line-height:1.6}
+a{display:inline-flex;color:#ffacb9;font-size:13px;font-weight:700;text-decoration:none;margin-top:8px}
+a:hover{text-decoration:underline}
+footer{font-size:11px;color:#99909e;margin-top:18px;line-height:1.6}
+</style>
+</head>
+<body>
+<main>
+<div class="head"><div class="symbol" aria-hidden="true">♫</div><div><h1>SmartFit Music</h1><p class="sub">Your workout playlist · separate listening window</p></div></div>
+<section class="card" aria-label="Music player">
+  <p id="status" class="note" role="status">Preparing your saved playlist…</p>
+  <div id="player"></div>
+  <a id="external" href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer" hidden>Open in music service ↗</a>
+</section>
+<footer>Keep this window open while browsing SmartFit. Playback starts when you press Play in the official service player. Closing this window will stop its audio.</footer>
+</main>
+<script src="/static/js/music-window.js?v=1" defer></script>
+</body>
+</html>
