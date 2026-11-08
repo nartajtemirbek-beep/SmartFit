@@ -92,7 +92,7 @@
     // The official Spotify compact embed is designed for 152px height.
     // A taller iframe leaves a blank white section on some browser/service combinations.
     const spotify=settings.provider==='spotify';
-    frame.src=spotify?entry.embed+'?theme=0':entry.embed;
+    frame.src=entry.embed;
     frame.loading='lazy';
     frame.referrerPolicy='strict-origin-when-cross-origin';
     frame.allow='encrypted-media; fullscreen; picture-in-picture';
