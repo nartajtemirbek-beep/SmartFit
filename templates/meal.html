@@ -1,1 +1,80 @@
-{% extends 'base.html' %}{% block content %}<div class="intro"><h1>Meal photo description</h1><p>Optional AI-powered visual description. Images are not stored in SmartFit. No exact nutrition estimates are claimed.</p></div><div class="panel narrow"><form action="/meal" method="post" enctype="multipart/form-data"><input type="hidden" name="token" value="{{csrf}}"><label>Food photo (JPG, PNG, WebP, max 3 MB)<input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required></label><button>Describe food</button></form>{% if error %}<p class="alert">{{error}}</p>{% endif %}{% if result %}<h3>Possible visible foods</h3><p>{{result}}</p><p class="muted">Visual estimates can be wrong. Check ingredients yourself.</p>{% endif %}</div>{% endblock %}
+{% extends 'base.html' %}
+{% block content %}
+<div class="intro nutrition-intro">
+  <div class="eyebrow">NUTRITION · TWO FREE TOOLS</div>
+  <h1>Food Scanner</h1>
+  <p>Choose how to identify food: a photo of a meal or a product barcode. Both tools work without paid AI keys.</p>
+</div>
+<section class="panel nutrition-panel" aria-labelledby="food-scanner-title">
+  <div class="nutrition-section-title"><span class="nutrition-section-icon">01</span><div><h2 id="food-scanner-title">AI Meal Photo</h2><p class="muted">Identify a possible dish from a photo using a free Food-101 model in your browser.</p></div></div>
+  <label for="food-photo">Meal photo (JPG, PNG or WebP, up to 3 MB)</label>
+  <input id="food-photo" type="file" accept="image/jpeg,image/png,image/webp">
+  <div id="food-preview" hidden><img id="food-preview-img" alt="Preview of your meal"></div>
+  <button type="button" class="btn primary" id="scan-food">Identify food — free AI</button>
+  <p id="food-status" role="status" aria-live="polite">Choose a photo to begin.</p>
+  <div id="food-results" class="food-results" hidden aria-live="polite"></div>
+  <p class="muted nutrition-note">This model recognizes 101 dish types. Photos stay in your browser and cannot reliably determine ingredients or nutrition values.</p>
+</section>
+<section class="panel nutrition-panel" aria-labelledby="barcode-title">
+  <div class="nutrition-section-title"><span class="nutrition-section-icon">02</span><div><h2 id="barcode-title">Product Barcode Scanner</h2><p class="muted">Find packaged food by its barcode and view community-submitted label information from Open Food Facts.</p></div></div>
+  <div class="barcode-actions">
+    <button type="button" class="btn primary" id="barcode-camera-toggle">Scan using camera</button>
+    <label class="barcode-image-label" for="barcode-image">Or upload barcode photo<input id="barcode-image" type="file" accept="image/*"></label>
+  </div>
+  <div id="barcode-camera-box" hidden><video id="barcode-video" autoplay muted playsinline aria-label="Barcode camera preview"></video><p class="muted">Keep the barcode clearly visible in the frame.</p></div>
+  <form id="barcode-form" class="barcode-form">
+    <label for="barcode-code">Barcode number</label>
+    <div class="barcode-form-row"><input id="barcode-code" type="text" inputmode="numeric" pattern="[0-9]{8,14}" minlength="8" maxlength="14" placeholder="Enter the 8–14 digits" required><button class="btn primary" type="submit">Find product</button></div>
+  </form>
+  <p id="barcode-status" role="status" aria-live="polite">Scan the code using your camera or enter the digits printed below it.</p>
+  <div id="barcode-result" class="barcode-result" hidden>
+    <h3 id="barcode-product-name"></h3>
+    <p class="muted" id="barcode-brand"></p>
+    <div class="barcode-reference"><strong>Reference label values per 100 g / 100 ml</strong><div id="barcode-per100"></div></div>
+    <label for="barcode-quantity">Product amount (g, or ml for drinks)</label>
+    <input type="number" id="barcode-quantity" min="1" max="10000" step="1" value="100" inputmode="decimal">
+    <div id="barcode-values" class="barcode-values" aria-live="polite"></div>
+    <p class="muted nutrition-note">These are product-label reference values scaled to the entered amount, not a personal intake recommendation. Data can be missing or outdated. Verify the packaging.</p>
+    <a id="barcode-source" class="nutrition-source" href="https://world.openfoodfacts.org/" rel="noopener noreferrer" target="_blank">View product source — Open Food Facts ↗</a>
+  </div>
+  <p class="muted nutrition-note">Camera barcode detection is supported only in some browsers. Manual code entry works even when camera scanning is unavailable.</p>
+</section>
+<style>
+.nutrition-intro{max-width:850px}
+.nutrition-panel{max-width:970px;padding:clamp(20px,3vw,32px)}
+.nutrition-section-title{display:flex;align-items:start;gap:15px;margin:0 0 22px}
+.nutrition-section-title h2{margin:0 0 7px;font-size:23px}
+.nutrition-section-title p{margin:0}
+.nutrition-section-icon{background:#5a303e;color:#ffd9df;border:1px solid #7c4353;padding:11px;border-radius:12px;font-weight:800}
+.nutrition-panel input[type=file]{margin:12px 0 18px}
+.nutrition-panel [hidden]{display:none!important}
+#food-preview{margin-bottom:20px}
+#food-preview-img{display:block;width:min(100%,430px);max-height:280px;object-fit:contain;border-radius:14px;background:#111119}
+#food-status,#barcode-status{color:#ffb9c0;line-height:1.6;margin:15px 0}
+.food-results,.barcode-result{background:linear-gradient(135deg,#30252e,#242029);border:1px solid #63404c;padding:24px;border-radius:16px;margin:18px 0}
+.food-results h2,.barcode-result h3{margin-top:0}
+.food-results ol{padding-left:26px;line-height:2}
+.food-results li span{margin-left:8px;font-size:12px;color:#c9bcc7}
+.food-results p,.nutrition-note{font-size:12px;line-height:1.7}
+.barcode-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
+.barcode-image-label{padding:12px 15px;border:1px solid #74505d;border-radius:12px;cursor:pointer;color:#f1d4da}
+.barcode-image-label input{display:block;width:min(260px,100%);margin:5px 0 0!important;font-size:11px}
+.barcode-form{margin-top:12px}
+.barcode-form-row{display:flex;gap:12px;margin-top:8px}
+.barcode-form-row input{flex:1;min-width:0}
+#barcode-camera-box{margin-bottom:20px}
+#barcode-video{display:block;width:min(100%,480px);max-height:310px;object-fit:cover;background:#0b0b0f;border-radius:14px}
+.barcode-reference{border-bottom:1px solid #55414d;padding:10px 0 18px;margin-bottom:18px}
+#barcode-per100{display:flex;gap:10px 20px;flex-wrap:wrap;font-size:12px;color:#c9bac6;margin-top:10px}
+#barcode-quantity{max-width:210px;margin:8px 0 15px}
+.barcode-values{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.food-nutrient{padding:16px 10px;text-align:center;background:#1d1c24;border-radius:12px;display:grid;gap:8px}
+.food-nutrient strong{font-size:23px}
+.food-nutrient small{color:#c8beca;font-size:11px}
+.nutrition-source{display:inline-block;color:#ffabb5;font-weight:700;margin-top:12px}
+.nutrition-panel button:disabled{opacity:.55;cursor:wait}
+@media(max-width:650px){.barcode-values{grid-template-columns:repeat(2,minmax(0,1fr))}.barcode-form-row{flex-wrap:wrap}.barcode-form-row button{width:100%}}
+</style>
+<script type="module" src="/static/js/food-scanner.js?v=1"></script>
+<script defer src="/static/js/barcode-scanner.js?v=1"></script>
+{% endblock %}
