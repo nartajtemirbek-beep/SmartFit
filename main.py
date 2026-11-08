@@ -96,6 +96,7 @@ def init_db():
         with db() as c:
             for statement in POSTGRES_SCHEMA.split(';'):
                 if statement.strip():c.execute(statement)
+            c.execute('ALTER TABLE exercise_logs ADD COLUMN IF NOT EXISTS weight_kg DOUBLE PRECISION')
     else:
         with db() as c:
             c.executescript('''
@@ -109,6 +110,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS coach_messages(id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE, role TEXT NOT NULL CHECK (role IN ('user','assistant')), content TEXT NOT NULL, created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP);
         CREATE INDEX IF NOT EXISTS idx_coach_user_history ON coach_messages(user_id,id);
         ''')
+            cols={row['name'] for row in c.execute('PRAGMA table_info(exercise_logs)').fetchall()}
+            if 'weight_kg' not in cols:c.execute('ALTER TABLE exercise_logs ADD COLUMN weight_kg REAL')
 
 init_db()
 
@@ -257,7 +260,7 @@ def progress(request:Request):
         weights=c.execute('SELECT weight_kg,recorded_at FROM weight_history WHERE user_id=? ORDER BY recorded_at,id',(user,)).fetchall()
         workouts=c.execute('SELECT id,title,completed_on,notes FROM workout_sessions WHERE user_id=? ORDER BY completed_on DESC,id DESC',(user,)).fetchall()
         # Select each saved exercise, then aggregate in Python. Works identically in PostgreSQL and SQLite.
-        details=c.execute('''SELECT e.session_id,e.exercise,e.sets,e.reps
+        details=c.execute('''SELECT e.session_id,e.exercise,e.sets,e.reps,e.weight_kg
             FROM exercise_logs e JOIN workout_sessions s ON s.id=e.session_id
             WHERE s.user_id=? ORDER BY e.id''',(user,)).fetchall()
     today=date.today()
@@ -315,7 +318,7 @@ def generate_plan(request:Request,token:str=Form(...)):
                   (user,f'SmartFit Variation {variant+1}',json.dumps(plan)))
     return go('/workout-plan')
 
-def validate_workout(title,completed_on,exercise,sets,reps,notes):
+def validate_workout(title,completed_on,exercise,sets,reps,notes,weight=None):
     # Validate before writing any rows.
     try:
         parsed=date.fromisoformat(completed_on)
@@ -326,42 +329,47 @@ def validate_workout(title,completed_on,exercise,sets,reps,notes):
         raise HTTPException(400,'Please check session name, date and notes')
     if not (1<=len(exercise)<=12 and len(exercise)==len(sets)==len(reps)):
         raise HTTPException(400,'Add between 1 and 12 complete exercises')
+    if weight is None or len(weight)==0:weight=['']*len(exercise)
+    if len(weight)!=len(exercise):raise HTTPException(400,'Provide one optional weight entry for each exercise')
     entries=[]
-    for name,count,repetitions in zip(exercise,sets,reps):
+    for name,count,repetitions,load in zip(exercise,sets,reps,weight):
         name=name.strip()
         if not (1<=len(name)<=100 and 1<=count<=20 and 1<=repetitions<=100):
             raise HTTPException(400,'Each exercise needs a name, 1–20 sets and 1–100 reps')
-        entries.append((name,count,repetitions))
+        try:kg=None if str(load).strip()=='' else float(load)
+        except (TypeError,ValueError):raise HTTPException(400,'Weight must be a valid number')
+        if kg is not None and (not 0<=kg<=1000 or kg!=kg):raise HTTPException(400,'Weight must be 0–1000 kg')
+        entries.append((name,count,repetitions,kg))
     return title.strip(),parsed.isoformat(),notes.strip(),entries
 
 @app.post('/workouts')
 def add_workout(request:Request,token:str=Form(...),title:str=Form(...),completed_on:str=Form(...),
-                exercise:list[str]=Form(...),sets:list[int]=Form(...),reps:list[int]=Form(...),notes:str=Form('')):
+                exercise:list[str]=Form(...),sets:list[int]=Form(...),reps:list[int]=Form(...),notes:str=Form(''),weight:list[str]=Form([])):
     user=require_login(request);require_csrf(request,token)
-    title,completed_on,notes,entries=validate_workout(title,completed_on,exercise,sets,reps,notes)
+    title,completed_on,notes,entries=validate_workout(title,completed_on,exercise,sets,reps,notes,weight)
     with db() as c:
         session=c.execute('INSERT INTO workout_sessions(user_id,title,completed_on,notes) VALUES (?,?,?,?)',
                           (user,title,completed_on,notes)).lastrowid
-        for name,count,repetitions in entries:
-            c.execute('INSERT INTO exercise_logs(session_id,exercise,sets,reps) VALUES (?,?,?,?)',
-                      (session,name,count,repetitions))
+        for name,count,repetitions,kg in entries:
+            c.execute('INSERT INTO exercise_logs(session_id,exercise,sets,reps,weight_kg) VALUES (?,?,?,?,?)',
+                      (session,name,count,repetitions,kg))
     return go('/workouts?status=saved')
 
 @app.post('/workouts/{session_id}/edit')
 def edit_workout(request:Request,session_id:int,token:str=Form(...),title:str=Form(...),
                  completed_on:str=Form(...),exercise:list[str]=Form(...),sets:list[int]=Form(...),
-                 reps:list[int]=Form(...),notes:str=Form('')):
+                 reps:list[int]=Form(...),notes:str=Form(''),weight:list[str]=Form([])):
     user=require_login(request);require_csrf(request,token)
-    title,completed_on,notes,entries=validate_workout(title,completed_on,exercise,sets,reps,notes)
+    title,completed_on,notes,entries=validate_workout(title,completed_on,exercise,sets,reps,notes,weight)
     with db() as c:
         owned=c.execute('SELECT id FROM workout_sessions WHERE id=? AND user_id=?',(session_id,user)).fetchone()
         if not owned:raise HTTPException(404,'Workout not found')
         c.execute('UPDATE workout_sessions SET title=?,completed_on=?,notes=? WHERE id=? AND user_id=?',
                   (title,completed_on,notes,session_id,user))
         c.execute('DELETE FROM exercise_logs WHERE session_id=?',(session_id,))
-        for name,count,repetitions in entries:
-            c.execute('INSERT INTO exercise_logs(session_id,exercise,sets,reps) VALUES (?,?,?,?)',
-                      (session_id,name,count,repetitions))
+        for name,count,repetitions,kg in entries:
+            c.execute('INSERT INTO exercise_logs(session_id,exercise,sets,reps,weight_kg) VALUES (?,?,?,?,?)',
+                      (session_id,name,count,repetitions,kg))
     return go('/workouts?status=updated')
 
 @app.post('/reminders')
@@ -597,7 +605,7 @@ def dashboard_context(request):
         details=[]
         if session_ids:
             marks=','.join('?' for _ in session_ids)
-            details=c.execute(f'''SELECT e.session_id,e.exercise,e.sets,e.reps FROM exercise_logs e
+            details=c.execute(f'''SELECT e.session_id,e.exercise,e.sets,e.reps,e.weight_kg FROM exercise_logs e
                 JOIN workout_sessions s ON s.id=e.session_id
                 WHERE s.user_id=? AND e.session_id IN ({marks}) ORDER BY e.id''',(user,*session_ids)).fetchall()
     by_session={}
