@@ -458,17 +458,29 @@ async def food_reference(request:Request, q:str):
     # Avoid hitting Open Food Facts search rate limits on every scan.
     if len(_FOOD_REF_CACHE)>100:
         _FOOD_REF_CACHE.clear()
+    # API v2 structured category search is more reliable than legacy full-text CGI.
+    # Food-101 names represent dish categories, so search by category rather than
+    # by package/product title. This is still only a reference product match.
+    category=query.replace(' ','-')
     try:
-        async with httpx.AsyncClient(timeout=13.0,follow_redirects=False) as client:
-            res=await client.get('https://world.openfoodfacts.org/cgi/search.pl',
-                params={'search_terms':query,'search_simple':1,'action':'process',
-                        'json':1,'page_size':15,
+        async with httpx.AsyncClient(timeout=12.0,follow_redirects=False) as client:
+            res=await client.get('https://world.openfoodfacts.org/api/v2/search',
+                params={'categories_tags_en':category,'page_size':30,
                         'fields':'code,product_name,product_name_en,brands,nutriments'},
-                headers={'User-Agent':'SmartFitEducation/1.0 (https://smartfit-todi.onrender.com)'})
+                headers={'User-Agent':'SmartFitEducation/1.0 (https://smartfit-todi.onrender.com; contact: nartajtemirbek@gmail.com)',
+                         'Accept':'application/json'})
+            if res.status_code == 429:
+                raise HTTPException(503,'Nutrition database is rate-limiting searches. Please retry later.')
+            if res.status_code in (403,503):
+                raise HTTPException(503,'Nutrition database is currently restricting requests. Please retry later.')
             res.raise_for_status()
             raw=res.json()
+    except HTTPException:
+        raise
+    except (httpx.TimeoutException,httpx.ConnectError):
+        raise HTTPException(503,'Cannot connect to nutrition database right now. Please retry later.')
     except (httpx.HTTPError,ValueError):
-        raise HTTPException(502,'Nutrition reference database is temporarily unavailable')
+        raise HTTPException(502,'Nutrition database request failed. You can still use barcode lookup.')
     def number(n,key):
         value=n.get(key)
         if isinstance(value,bool) or not isinstance(value,(int,float)) or not 0<=value<=10000:
