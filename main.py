@@ -448,7 +448,7 @@ async def food_reference(request:Request, q:str):
     require_login(request)
     import re, time, httpx
     query=' '.join(q.lower().replace('_',' ').strip().split())
-    if not (2 <= len(query) <= 65) or not re.fullmatch(r'[a-z0-9 .\\-]+',query):
+    if not (2 <= len(query) <= 65) or not re.fullmatch(r'[a-z0-9 .-]+',query):
         raise HTTPException(400,'Invalid food name')
     now=time.monotonic()
     cached=_FOOD_REF_CACHE.get(query)
