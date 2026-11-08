@@ -7,6 +7,39 @@
   <div class="tp-metric"><small>This week</small><strong>{{ thisweek }} <span>/ {{ p.training_days }}</span></strong><span>Sessions / weekly preference</span></div>
   <div class="tp-metric"><small>Next step</small><a href="/progress" class="tp-metric-action">See progress ↗</a><span>Charts and exercise insights</span></div>
 </div>
+<section class="tp-music-panel" id="smartfit-music" aria-labelledby="music-heading">
+  <div class="tp-music-heading">
+    <div class="tp-music-identity">
+      <span class="tp-music-symbol" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+      <div><span class="eyebrow">OPTIONAL WORKOUT COMPANION</span><h2 id="music-heading">SmartFit Music</h2><p>Play your own playlist while you track your workout.</p></div>
+    </div>
+    <label class="tp-music-toggle" for="music-enable">
+      <span>Music</span><input id="music-enable" type="checkbox" aria-label="Music on or off">
+      <strong id="music-status">OFF</strong>
+    </label>
+  </div>
+  <div id="music-controls" class="tp-music-controls" hidden>
+    <div class="tp-music-select-line">
+      <label for="music-provider">Music service
+        <select id="music-provider">
+          <option value="spotify">Spotify</option>
+          <option value="youtube">YouTube Music</option>
+          <option value="apple">Apple Music</option>
+        </select>
+      </label>
+      <a id="music-open" href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer" class="tp-music-open">Explore Spotify ↗</a>
+    </div>
+    <div class="tp-music-link-row">
+      <label for="music-url">Your playlist, album or song URL
+        <input id="music-url" type="url" inputmode="url" autocomplete="off" maxlength="600" placeholder="Paste a link from your music service">
+      </label>
+      <button id="music-save" type="button" class="tp-music-save">Save playlist</button>
+    </div>
+    <p id="music-message" role="status" aria-live="polite" class="tp-music-message"></p>
+    <div id="music-stage" class="tp-music-player"></div>
+  </div>
+  <p class="tp-music-footnote">Music is off by default. Songs are streamed through the original service, not stored by SmartFit. Some services require an account or subscription.</p>
+</section>
 <div class="tp-layout">
   <section class="tp-panel" aria-labelledby="new-workout-title">
     <div class="tp-panel-heading"><h2 id="new-workout-title">Log a workout</h2><span class="tp-tag">Private</span></div>
@@ -54,6 +87,7 @@
 </div>
 <template id="tp-exercise-template"><div class="tp-exercise-row"><label>Muscle group<select data-muscle-group required><option value="">Choose muscle group</option></select></label><label>Exercise<select name="exercise" data-exercise-select required><option value="">Choose exercise</option></select></label><label>Sets<input type="number" name="sets" min="1" max="20" value="2" required></label><label>Reps<input type="number" name="reps" min="1" max="100" value="10" required></label><label>Weight (kg)<input type="number" name="weight" min="0" max="1000" step="0.5" placeholder="Optional"></label><button type="button" data-remove-exercise class="tp-icon-btn" aria-label="Remove exercise">×</button></div></template>
 <script src="/static/js/exercise-library.js?v=1" defer></script>
+<script src="/static/js/workout-music.js?v=1" defer></script>
 <style>
 /* Exercise picker: two clear full-width selectors above compact numeric inputs. */
 .tp-exercise-list{min-width:0}
@@ -92,4 +126,36 @@
   .tp-exercise-row label:nth-of-type(5),.tp-edit-form .tp-exercise-row label:nth-of-type(5){grid-column:span 2}
   .tp-exercise-row [data-remove-exercise],.tp-edit-form .tp-exercise-row [data-remove-exercise]{grid-column:span 6;width:100%;height:36px}
 }
-</style>{% endblock %}
+</style><style>
+.tp-music-panel{margin:18px 0 24px;background:linear-gradient(120deg,#28212d,#1c1c26 65%);border:1px solid #51404c;border-radius:20px;padding:21px 23px}
+.tp-music-heading{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+.tp-music-identity{display:flex;align-items:center;gap:15px;min-width:0}
+.tp-music-symbol{display:grid;place-items:center;flex:0 0 50px;width:50px;height:50px;border-radius:14px;color:#ffb6c0;background:#52303d}
+.tp-music-identity h2{font-size:20px;margin:5px 0 3px}.tp-music-identity p{color:#b3acba;font-size:12px;margin:0;line-height:1.5}
+.tp-music-toggle{display:flex;align-items:center;gap:9px;color:#e4dce4;font-weight:700;font-size:13px;cursor:pointer}
+.tp-music-toggle input{appearance:none;display:block;width:45px;height:25px;background:#54505b;border:1px solid #706573;border-radius:20px;position:relative;cursor:pointer;transition:background .2s}
+.tp-music-toggle input:before{content:"";position:absolute;left:3px;top:3px;width:17px;height:17px;background:#fff;border-radius:50%;transition:transform .2s}
+.tp-music-toggle input:checked{background:#e45b74;border-color:#e45b74}
+.tp-music-toggle input:checked:before{transform:translateX(20px)}
+.tp-music-toggle input:focus-visible{outline:2px solid #ff9aa6;outline-offset:3px}
+.tp-music-toggle strong{width:26px;font-size:10px;color:#aaa3b0}
+.tp-music-toggle strong.enabled{color:#ff9daf}
+.tp-music-controls{border-top:1px solid #574250;padding-top:18px;margin-top:19px;display:grid;gap:15px}
+.tp-music-controls[hidden]{display:none}
+.tp-music-select-line{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.tp-music-select-line label{flex:1;min-width:200px}
+.tp-music-link-row{display:flex;align-items:end;gap:12px;flex-wrap:wrap}
+.tp-music-link-row label{flex:1;min-width:220px}
+.tp-music-link-row label,.tp-music-select-line label{display:grid;gap:8px;font-size:12px;color:#c5bac8;font-weight:700}
+.tp-music-controls input,.tp-music-controls select{width:100%;min-width:0;box-sizing:border-box;background:#16161f;color:#f6f3f6;border:1px solid #594c5b;border-radius:11px;padding:11px 12px}
+.tp-music-save{background:#9d4257;color:#fff;border:0;border-radius:11px;padding:12px 17px;font-weight:750;cursor:pointer;white-space:nowrap}
+.tp-music-open{display:inline-flex;align-items:center;justify-content:center;color:#ffb0bc;text-decoration:none;border:1px solid #80515f;border-radius:10px;padding:11px 13px;font-size:12px;font-weight:750}
+.tp-music-message{font-size:12px;color:#bfb5c5;line-height:1.55;margin:0}
+.tp-music-message[data-error="true"]{color:#ffa1a8}
+.tp-music-player{width:100%;max-width:660px}
+.tp-music-player:empty{display:none}
+.tp-music-player iframe{display:block;max-width:100%}
+.tp-music-footnote{color:#8e8999;font-size:11px;line-height:1.6;margin:15px 0 0}
+@media(max-width:650px){.tp-music-panel{padding:17px}.tp-music-heading{align-items:start}.tp-music-identity{gap:10px}.tp-music-symbol{flex-basis:42px;width:42px;height:42px}.tp-music-link-row,.tp-music-select-line{display:grid;grid-template-columns:1fr}.tp-music-save,.tp-music-open{width:100%}}
+</style>
+{% endblock %}
