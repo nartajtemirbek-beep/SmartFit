@@ -8,7 +8,6 @@
   const input=root.querySelector('#music-url');
   const save=root.querySelector('#music-save');
   const popout=root.querySelector('#music-popout');
-  let listeningWindow=null;
   const open=root.querySelector('#music-open');
   const stage=root.querySelector('#music-stage');
   const message=root.querySelector('#music-message');
@@ -109,39 +108,25 @@
   }
   popout.addEventListener('click',()=>{
     if(!settings.enabled){
-      notice('Turn Music ON and save a playlist first.',true);
+      notice('Turn Music ON and save a playlist before opening Music Mode.',true);
       return;
     }
     const saved=getLink(settings.provider,settings.urls[settings.provider]||'');
     if(!saved){
-      notice('Save a valid playlist link first, then open the listening window.',true);
+      notice('Save a valid playlist link first, then start Music Mode.',true);
       return;
     }
-    if(listeningWindow&&!listeningWindow.closed){
-      listeningWindow.focus();
-      notice('Your listening window is already open. Music continues there while you browse SmartFit.');
-      return;
-    }
-    // A user click opens the popout; this window stays independent of page navigation.
-    const opened=window.open('/static/music-window.html','smartfitMusicPlayer',
-      'width=610,height=530,resizable=yes,scrollbars=yes');
-    if(!opened){
-      notice('Your browser blocked the music window. Allow pop-ups for SmartFit and try again.',true);
-      return;
-    }
-    listeningWindow=opened;
-    listeningWindow.focus();
-    // Avoid duplicate playback in both the tracker and the separate window.
-    stage.replaceChildren();
-    stage.classList.remove('tp-music-spotify');
-    notice('The listening window opened. Press Play there once, then browse SmartFit freely. You can close that window to stop its music.');
+    // Same browser tab: the official embed will be mounted once in a permanent
+    // floating player while the SmartFit pages navigate in an app iframe.
+    // User starts playback again once upon entering Music Mode; then browsing
+    // within that workspace no longer destroys the audio player.
+    location.assign('/static/music-workspace.html#'+encodeURIComponent('/workouts'));
   });
   toggle.addEventListener('change',()=>{
     settings.enabled=toggle.checked;
     if(!settings.enabled){
       notice('Music is off. Embedded players have been removed.');
-      if(listeningWindow&&!listeningWindow.closed)listeningWindow.close();
-      listeningWindow=null;
+
     }
     persist();render();
   });
