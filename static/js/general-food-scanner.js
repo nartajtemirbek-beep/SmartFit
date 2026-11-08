@@ -76,7 +76,7 @@ function renderSelected() {
   calculateTotal();
 }
 function calculateTotal(){
-  if (!selection.size) { totalBox.hidden=true; return; }
+  if (selection.size < 2) { totalBox.hidden=true; return; }
   const sum={calories:0,protein:0,fat:0,carbohydrates:0};
   for (const [id,amount] of selection){
     const item=FOOD_CATALOG.find(x=>x.id===id);
