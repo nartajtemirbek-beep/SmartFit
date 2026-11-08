@@ -1,4 +1,9 @@
-{% extends 'base.html' %}{% block content %}<div class="page-intro"><span class="eyebrow">TRAINING</span><h1>Your workout plan</h1><p>A flexible starting point based on your preferences. Adjust to your comfort.</p></div><div class="split-layout"><section class="surface padded"><div class="surface-head"><h2>My schedule</h2><span class="soft-tag">{{p.training_days}} days / week</span></div>{% if plan %}<div class="plan-list">{% for d in plan %}<article class="plan-day"><span class="day-circle">{{loop.index}}</span><div><h3>{{d.day}} · {{d.focus}}</h3><p>{{d.exercises|join(' · ')}}</p></div></article>{% endfor %}</div>{% else %}<div class="empty-state"><b>No plan yet</b><p>Generate your first starter plan below.</p></div>{% endif %}<form action="/plan" method="post"><input type="hidden" name="token" value="{{csrf}}"><button class="btn primary">{{'Refresh my plan' if plan else 'Create my plan'}} ↗</button></form></section><aside class="surface routine-card">
+{% extends 'base.html' %}{% block content %}<div class="page-intro"><span class="eyebrow">TRAINING</span><h1>Your workout plan</h1><p>A flexible starting point based on your preferences. Adjust to your comfort.</p></div><div class="split-layout"><section class="surface padded"><div class="surface-head"><h2>My schedule</h2><span class="soft-tag">{{p.training_days}} days / week</span></div>
+{% if plan and plan_variant %}
+<p class="plan-choice-summary"><span class="plan-choice-dot"></span>
+{% if plan_variant == 1 %}Balanced Routine{% elif plan_variant == 2 %}Strength &amp; Skills{% else %}Variety &amp; Mobility{% endif %}
+<span class="plan-variant-number">Plan {{ plan_variant }} of 3</span></p>
+{% endif %}{% if plan %}<div class="plan-list">{% for d in plan %}<article class="plan-day"><span class="day-circle">{{loop.index}}</span><div><h3>{{d.day}} · {{d.focus}}</h3><p>{{d.exercises|join(' · ')}}</p></div></article>{% endfor %}</div>{% else %}<div class="empty-state"><b>No plan yet</b><p>Generate your first starter plan below.</p></div>{% endif %}<form action="/plan" method="post"><input type="hidden" name="token" value="{{csrf}}"><button class="btn primary">{{'Try another plan' if plan else 'Create my plan'}} ↻</button></form><p class="plan-refresh-hint">Choose from three rotating plans designed around your experience, equipment and weekly schedule. Your completed workout history stays saved.</p></section><aside class="surface routine-card">
   <div class="routine-card-head">
     <span class="routine-card-kicker">YOUR SETTINGS</span>
     <h2>Made for your routine</h2>
@@ -11,6 +16,11 @@
   </div>
   <a href="/profile" class="routine-card-link">Change preferences <span aria-hidden="true">↗</span></a>
 </aside></div><style>
+.plan-choice-summary{display:flex;align-items:center;flex-wrap:wrap;gap:9px;color:#f0c4cf;font-weight:750;font-size:13px;padding:11px 13px;background:#332733;border:1px solid #573d4a;border-radius:11px;margin:15px 0}
+.plan-choice-dot{width:8px;height:8px;border-radius:50%;background:#f27c8e}
+.plan-variant-number{color:#bba6b2;font-weight:600;font-size:11px;margin-left:auto}
+.plan-refresh-hint{color:#9996a6;font-size:12px;line-height:1.5;margin:14px 0 0}
+
 .routine-card{padding:clamp(22px,3vw,32px);display:flex;flex-direction:column;align-self:start;gap:24px;min-width:0;background:linear-gradient(155deg,#24202a,#1b1c24 75%);border-color:#39313d}
 .routine-card-head{border-bottom:1px solid #403642;padding-bottom:20px}
 .routine-card-kicker{display:block;font-size:11px;letter-spacing:1.5px;font-weight:800;color:#e7909c;margin-bottom:14px}
