@@ -6,14 +6,14 @@
   <p>Choose how to identify food: a photo of a meal or a product barcode. Both tools work without paid AI keys.</p>
 </div>
 <section class="panel nutrition-panel" aria-labelledby="food-scanner-title">
-  <div class="nutrition-section-title"><span class="nutrition-section-icon">01</span><div><h2 id="food-scanner-title">AI Meal Photo</h2><p class="muted">Identify a possible dish from a photo using a free Food-101 model in your browser.</p></div></div>
+  <div class="nutrition-section-title"><span class="nutrition-section-icon">01</span><div><h2 id="food-scanner-title">AI Meal Photo</h2><p class="muted">Identify a possible dish with Food-101 and look up reference nutrition per 100 g for similar products. Check the match before using the values.</p></div></div>
   <label for="food-photo">Meal photo (JPG, PNG or WebP, up to 3 MB)</label>
   <input id="food-photo" type="file" accept="image/jpeg,image/png,image/webp">
   <div id="food-preview" hidden><img id="food-preview-img" alt="Preview of your meal"></div>
   <button type="button" class="btn primary" id="scan-food">Identify food — free AI</button>
   <p id="food-status" role="status" aria-live="polite">Choose a photo to begin.</p>
   <div id="food-results" class="food-results" hidden aria-live="polite"></div>
-  <p class="muted nutrition-note">This model recognizes 101 dish types. Photos stay in your browser and cannot reliably determine ingredients or nutrition values.</p>
+  <p class="muted nutrition-note">Food-101 recognizes 101 dish types. Photos stay in your browser. The separate nutrition reference comes from a selected Open Food Facts product, not from analysis of the photo.</p>
 </section>
 <section class="panel nutrition-panel" aria-labelledby="barcode-title">
   <div class="nutrition-section-title"><span class="nutrition-section-icon">02</span><div><h2 id="barcode-title">Product Barcode Scanner</h2><p class="muted">Find packaged food by its barcode and view community-submitted label information from Open Food Facts.</p></div></div>
@@ -75,6 +75,6 @@
 .nutrition-panel button:disabled{opacity:.55;cursor:wait}
 @media(max-width:650px){.barcode-values{grid-template-columns:repeat(2,minmax(0,1fr))}.barcode-form-row{flex-wrap:wrap}.barcode-form-row button{width:100%}}
 </style>
-<script type="module" src="/static/js/food-scanner.js?v=1"></script>
+<script type="module" src="/static/js/food-scanner.js?v=2"></script>
 <script defer src="/static/js/barcode-scanner.js?v=1"></script>
 {% endblock %}
