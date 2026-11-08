@@ -120,8 +120,8 @@ function onPhotoChosen(file){
   resetPhoto();
   selectedPhotoFile = null;
   if (!file) { photoPreview.hidden=true;setStatus('Choose a photo or add foods manually.');return; }
-  if (!file.type.startsWith('image/') || file.size>3_000_000){
-    photoPreview.hidden=true;setStatus('Please use an image under 3 MB.');return;
+  if (!file.type.startsWith('image/') || file.size>15_000_000){
+    photoPreview.hidden=true;setStatus('Please use an image under 15 MB.');return;
   }
   selectedPhotoFile = file;
   imageUrl=URL.createObjectURL(file);

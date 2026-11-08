@@ -14,7 +14,6 @@
   const cameraBox=document.querySelector('#barcode-camera-box');
   const readerElement=document.querySelector('#barcode-camera-reader');
   const scanImage=document.querySelector('#barcode-image');
-  const cameraPhoto=document.querySelector('#barcode-camera-photo');
   let nutrients=null;
   let scanner=null;
   let cameraActive=false;
@@ -98,7 +97,7 @@
   cameraButton.addEventListener('click',async()=>{
     if(cameraActive||starting){await stopCamera();return;}
     if(!navigator.mediaDevices?.getUserMedia){
-      message('Live camera requires a secure HTTPS browser with camera access. Use Take barcode photo or type the digits instead.');
+      message('Live camera requires a secure HTTPS browser with camera access. Use barcode photo upload or type the digits instead.');
       return;
     }
     starting=true;cameraButton.textContent='Starting camera…';
@@ -122,7 +121,7 @@
     }catch(error){
       console.error('Camera start error',error);
       await stopCamera();
-      message('Camera could not start. Allow camera access in your browser settings, or use Take barcode photo / manual entry.');
+      message('Camera could not start. Allow camera access in your browser settings, or use barcode photo upload / manual entry.');
     }
   });
   async function readBarcodeImage(file){
@@ -145,7 +144,6 @@
     }
   }
   scanImage.addEventListener('change',async()=>{await readBarcodeImage(scanImage.files?.[0]);scanImage.value='';});
-  cameraPhoto.addEventListener('change',async()=>{await readBarcodeImage(cameraPhoto.files?.[0]);cameraPhoto.value='';});
   form.addEventListener('submit',async(event)=>{
     event.preventDefault();
     await stopCamera();
