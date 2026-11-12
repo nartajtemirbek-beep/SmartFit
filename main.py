@@ -154,7 +154,7 @@ def require_login(request):
 def go(path):return RedirectResponse(path,status_code=303)
 def render(request,name,**kwargs):
     return tpl.TemplateResponse(request,name,dict(kwargs,csrf=csrf(request),google_ready=GOOGLE_READY,user_id=uid(request)))
-def safe_error(msg):return go('/auth?error='+quote(msg))
+def safe_error(msg,mode='signup'):return go('/auth?mode='+mode+'&error='+quote(msg))
 
 @app.get('/',response_class=HTMLResponse)
 def home(request:Request):
@@ -180,7 +180,7 @@ def signup(request:Request,email:str=Form(...),password:str=Form(...),confirm:st
 def login(request:Request,email:str=Form(...),password:str=Form(...),token:str=Form(...)):
     require_csrf(request,token)
     with db() as c:r=c.execute('SELECT * FROM accounts WHERE email=?',(email.strip().lower(),)).fetchone()
-    if not r or not r['password_hash'] or not hasher.verify(password,r['password_hash']):return safe_error('Incorrect email or password.')
+    if not r or not r['password_hash'] or not hasher.verify(password,r['password_hash']):return safe_error('Incorrect email or password.',mode='login')
     request.session.clear();request.session['uid']=r['id']
     return go('/dashboard')
 
