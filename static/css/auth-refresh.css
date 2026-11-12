@@ -13,3 +13,22 @@ body.guest{background:radial-gradient(circle at 50% 0%,#26191f 0%,#111115 55%,#0
 .auth-box form label{display:block;font-size:13px;color:#c8c2cc;margin:0 0 13px}.auth-box form input{box-sizing:border-box;display:block;width:100%;margin-top:7px;border-radius:10px;border:1px solid #46404a;background:#111116;color:#fff;padding:12px 13px;font-size:15px;min-height:44px}.auth-box form input:focus{outline:2px solid #e84b60;outline-offset:1px}.auth-box .auth-submit{display:block;width:100%;margin-top:18px;padding:13px;border:0;border-radius:11px;background:#ee5263;color:white;font-weight:750;cursor:pointer}.auth-box .auth-submit:hover{background:#ff6273}
 .auth-box form[hidden]{display:none!important}.auth-note{font-size:12px;text-align:center;color:#a9a4ae;margin-top:18px}.auth-box .alert{margin:10px 0;padding:10px;border-radius:8px;background:#542431;color:#fff}
 @media(max-width:480px){.auth-center{align-items:flex-start;padding-top:30px}.auth-box{padding:23px 20px;border-radius:18px}}
+
+/* Auth refresh — preserve shared SmartFit brand and existing forms. */
+.auth-center{background:radial-gradient(ellipse at 50% -25%,rgba(221,78,102,.14),transparent 60%),#101014}
+.auth-box{position:relative;width:min(100%,452px);padding:27px 34px 32px;background:rgba(26,25,32,.94);border:1px solid rgba(250,177,190,.16);border-radius:21px;box-shadow:0 28px 90px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.035) inset;animation:sf-auth-enter .42s ease-out both}
+.auth-back{display:inline-flex;align-items:center;gap:9px;padding:8px 3px;margin:0 0 13px;color:#cfc9d2;font-size:12px;font-weight:650;text-decoration:none;transition:color .15s ease}
+.auth-back:hover{color:#fff}
+.auth-back:focus-visible{outline:2px solid #f57b8a;outline-offset:3px;border-radius:4px}
+.auth-logo{font-size:23px}
+.auth-box h1{margin-top:18px;font-size:28px;letter-spacing:-.7px}
+.auth-subtitle{margin-bottom:24px}
+.auth-password-wrap{display:block;position:relative}
+.auth-box form .auth-password-wrap input{padding-right:69px}
+.auth-password-toggle{position:absolute;right:7px;top:50%;transform:translateY(-50%);padding:8px 9px;border:0;border-radius:7px;background:transparent;color:#eeaab7;font-size:12px;font-weight:750;cursor:pointer}
+.auth-password-toggle:hover{background:#ffffff12;color:#fff}
+.auth-password-toggle:focus-visible{outline:2px solid #f57b8a;outline-offset:1px}
+.auth-box .auth-submit{min-height:48px}
+@keyframes sf-auth-enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:480px){.auth-box{padding:22px 20px 26px}.auth-back{margin-bottom:10px}}
+@media(prefers-reduced-motion:reduce){.auth-box{animation:none!important}.auth-back{transition:none!important}}
