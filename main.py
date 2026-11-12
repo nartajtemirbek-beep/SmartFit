@@ -154,12 +154,22 @@ def require_login(request):
 def go(path):return RedirectResponse(path,status_code=303)
 def render(request,name,**kwargs):
     return tpl.TemplateResponse(request,name,dict(kwargs,csrf=csrf(request),google_ready=GOOGLE_READY,user_id=uid(request)))
-def safe_error(msg,mode='signup'):return go('/auth?mode='+mode+'&error='+quote(msg))
+def safe_error(msg,mode='signup'):return go(('/sign-in' if mode=='login' else '/sign-up')+'?error='+quote(msg))
 
 @app.get('/',response_class=HTMLResponse)
 def home(request:Request):
     if uid(request):return go('/dashboard')
     return render(request,'welcome.html')
+
+@app.get('/sign-in',response_class=HTMLResponse)
+def sign_in_page(request:Request,error:str=''):
+    if uid(request):return go('/dashboard')
+    return render(request,'auth.html',mode='login',error=error)
+
+@app.get('/sign-up',response_class=HTMLResponse)
+def sign_up_page(request:Request,error:str=''):
+    if uid(request):return go('/dashboard')
+    return render(request,'auth.html',mode='signup',error=error)
 
 @app.get('/auth',response_class=HTMLResponse)
 def auth_page(request:Request,mode:str='signup',error:str=''):
