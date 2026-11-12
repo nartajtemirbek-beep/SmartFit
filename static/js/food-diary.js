@@ -58,7 +58,7 @@ document.getElementById('diary-photo-link').addEventListener('click',()=>remembe
 document.getElementById('diary-barcode-link').addEventListener('click',()=>rememberMeal());
 function rememberMeal(){sessionStorage.setItem('smartfit_diary_meal',mealSelect.value);sessionStorage.setItem('smartfit_diary_day',form.querySelector('[name=day]').value);}
 if(adult)amountInput.addEventListener('input',writeFields);
-nameInput.addEventListener('input',()=>{sourceInput.value='manual';reference=null;});
+nameInput.addEventListener('input',()=>{sourceInput.value='manual';reference=null;if(adult)for(const key of metrics)form.querySelector('[name='+key+']').value='';});
 form.addEventListener('submit',()=>{if(!adult)return;/* submitted numbers are optional estimates */});
 function renderMatches(items,label){
   const group=document.createElement('div');
@@ -101,7 +101,7 @@ async function search(){
 }
 searchButton.addEventListener('click',search);
 searchInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();search();}});
-searchInput.addEventListener('input',()=>{const value=searchInput.value.toLowerCase().trim();searchResults.replaceChildren();if(value.length>1){const local=FOOD_CATALOG.filter(x=>x.name.toLowerCase().includes(value)).slice(0,8).map(x=>({...x,source:'catalog'}));if(local.length)renderMatches(local,'Everyday foods');}});
+searchInput.addEventListener('input',()=>{searchToken++;const value=searchInput.value.toLowerCase().trim();searchResults.replaceChildren();if(value.length>1){const local=FOOD_CATALOG.filter(x=>x.name.toLowerCase().includes(value)).slice(0,8).map(x=>({...x,source:'catalog'}));if(local.length)renderMatches(local,'Everyday foods');}});
 try{
   const transfer=sessionStorage.getItem('smartfit_food_transfer');
   if(transfer){
@@ -112,7 +112,7 @@ try{
       const loggedDay=sessionStorage.getItem('smartfit_diary_day');
       const shownDay=form.querySelector('[name=day]').value;
       if(loggedDay && loggedDay!==shownDay){const url=new URL(window.location.href);url.searchParams.set('day',loggedDay);window.location.replace(url.toString());sessionStorage.setItem('smartfit_food_transfer',transfer);}
-      else openModal(meal,data);
+      else {openModal(meal,data);sessionStorage.removeItem('smartfit_diary_meal');sessionStorage.removeItem('smartfit_diary_day');}
     }
   }
 }catch(error){console.warn('Unable to import the scanner selection',error);}
