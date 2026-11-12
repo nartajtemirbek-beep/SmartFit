@@ -605,7 +605,7 @@ def food_diary_page(request:Request,day:str=''):
     selected=diary_day(day or date.today().isoformat())
     with db() as c:
         rows=c.execute('SELECT id,log_date,meal_type,food_name,amount_g,calories,protein,fat,carbohydrates,food_source FROM food_diary WHERE user_id=? AND log_date=? ORDER BY id DESC',(user,selected)).fetchall()
-        history=c.execute('SELECT log_date, COUNT(*) AS entries FROM food_diary WHERE user_id=? AND log_date>=? AND log_date<=? GROUP BY log_date ORDER BY log_date DESC LIMIT 31',(user,(date.fromisoformat(selected)-timedelta(days=30)).isoformat(),selected)).fetchall()
+        history=c.execute('SELECT log_date, COUNT(*) AS entries, COUNT(calories) AS known, SUM(calories) AS calories FROM food_diary WHERE user_id=? AND log_date>=? AND log_date<=? GROUP BY log_date ORDER BY log_date DESC LIMIT 31',(user,(date.fromisoformat(selected)-timedelta(days=30)).isoformat(),selected)).fetchall()
     return render(request,'food-diary.html',diary_date=selected,entries=[dict(x) for x in rows],history=[dict(x) for x in history],adult=p['age']>=18,fitness_goal=p['fitness_goal'],today=date.today().isoformat())
 
 @app.post('/api/food-diary')
