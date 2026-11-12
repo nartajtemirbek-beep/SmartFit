@@ -1,5 +1,14 @@
 {% extends 'base.html' %}{% block content %}
 <div class="intro"><div class="eyebrow">NUTRITION · YOUR PRIVATE JOURNAL</div><h1>Food Diary</h1><p>Remember what you ate, explore meal ideas, and revisit past days. Food values are only estimates.</p></div>
+{% if adult %}
+<section class="panel diary-panel diary-goal-panel" aria-labelledby="diary-goal-title">
+  <div class="diary-goal-heading"><div><span class="eyebrow">SAVED NUTRITION REFERENCE</span><h2 id="diary-goal-title">Your daily KБЖУ reference</h2></div><a class="btn secondary" href="/meal#daily-nutrition-title">Recalculate ↗</a></div>
+  {% if nutrition_goal %}
+  <div class="diary-metrics diary-goal-metrics"><div><small>Energy</small><strong>{{ nutrition_goal.energy|round|int }}</strong><small>kcal</small></div><div><small>Protein</small><strong>{{ nutrition_goal.protein|round|int }}</strong><small>g</small></div><div><small>Fat</small><strong>{{ nutrition_goal.fat|round|int }}</strong><small>g</small></div><div><small>Carbs</small><strong>{{ nutrition_goal.carbs|round|int }}</strong><small>g</small></div></div>
+  <div class="diary-goal-footer"><span>These saved values are optional estimates, not a medical target. You can update them anytime.</span><form method="post" action="/nutrition-goal/delete"><input type="hidden" name="token" value="{{csrf}}"><button type="submit" class="diary-goal-remove">Remove reference</button></form></div>
+  {% else %}<p class="muted">No nutrition reference saved yet. Calculate your illustrative maintenance KБЖУ on Nutrition, then choose <strong>Save to Food Diary</strong>.</p><a class="btn primary" href="/meal#daily-nutrition-title">Calculate a reference →</a>{% endif %}
+</section>
+{% endif %}
 <section class="panel diary-panel">
   <div class="diary-head"><div><span class="eyebrow">SELECTED DATE</span><h2>{{ diary_date }}</h2></div>
     <form method="get" action="/food-diary" class="diary-day-picker"><label for="diary-day">Choose day</label><input type="date" id="diary-day" name="day" value="{{diary_date}}" max="{{today}}" required><button class="btn secondary">View day</button></form>
@@ -9,7 +18,7 @@
     {% if adult %}<span>Nutrition labels and amounts are approximate. Days do not need to match exact targets.</span>
     {% else %}<span>Regular eating and variety support growth and activity. There are no calorie goals or streaks here.</span>{% endif %}
   </div>
-  {% set groups = [('Breakfast','☀','Morning meal'),('Lunch','◉','Midday meal'),('Dinner','◕','Evening meal'),('Snacks','✦','Snacks & extras')] %}
+  {% set groups = [('Breakfast','🌅','Morning meal'),('Lunch','🥗','Midday meal'),('Dinner','🍽️','Evening meal'),('Snacks','🍎','Snacks & extras')] %}
   {% for meal, symbol, subtitle in groups %}
   <section class="diary-meal" aria-label="{{meal}}">
     <div class="diary-meal-header"><div class="diary-meal-icon">{{symbol}}</div><div class="diary-meal-heading"><h3>{{meal}}</h3><small>{{subtitle}}</small></div>
@@ -43,10 +52,23 @@
   </div>
   {% else %}<div class="diary-overview"><span class="eyebrow">A FLEXIBLE JOURNAL</span><h3>Nourishment is more than numbers</h3><p>Meals can include carbohydrates for energy, protein for recovery, helpful fats, fruit or vegetables, and fluids. Missing an entry doesn't mean you've missed a goal.</p></div>{% endif %}
 </section>
+<section class="panel diary-panel diary-calendar-panel" aria-label="Food diary calendar">
+  <div class="diary-calendar-header"><div><span class="eyebrow">YOUR MEAL JOURNAL</span><h2>{{ calendar_heading }}</h2></div><div class="diary-calendar-nav"><a href="/food-diary?day={{diary_date}}&month={{calendar_previous}}" aria-label="Previous month">‹</a>{% if calendar_next %}<a href="/food-diary?day={{diary_date}}&month={{calendar_next}}" aria-label="Next month">›</a>{% endif %}</div></div>
+  <div class="diary-calendar-grid" role="group" aria-label="{{calendar_heading}}">
+    {% for label in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}<div class="diary-calendar-weekday">{{label}}</div>{% endfor %}
+    {% for week in calendar_weeks %}{% for day in week %}
+      {% if day %}<a href="/food-diary?day={{day.date}}&month={{calendar_month}}" class="diary-calendar-day {% if day.date==diary_date %}is-selected{% endif %} {% if day.date>today %}is-future{% endif %} status-{{day.status}}" aria-label="{{day.date}}: {% if day.status=='matched' %}recorded values near saved reference{% elif day.status=='partial' %}some nutrients missing{% elif day.status=='logged' %}food logged{% else %}no records{% endif %}">
+        <span>{{day.day}}</span>{% if day.status=='matched' %}<span class="diary-calendar-marker" aria-hidden="true">✓</span>{% elif day.status=='partial' %}<span class="diary-calendar-marker" aria-hidden="true">◐</span>{% elif day.status=='logged' %}<span class="diary-calendar-marker" aria-hidden="true">•</span>{% endif %}
+      </a>{% else %}<span class="diary-calendar-placeholder" aria-hidden="true"></span>{% endif %}
+    {% endfor %}{% endfor %}
+  </div>
+  <div class="diary-calendar-legend"><span><i class="legend-logged"></i> Recorded</span>{% if adult and nutrition_goal %}<span><i class="legend-matched"></i> Within ±15% of saved estimate</span><span><i class="legend-partial"></i> Incomplete nutrition data</span>{% endif %}</div>
+  <p class="muted diary-calendar-disclaimer">{% if adult and nutrition_goal %}A ✓ only means the foods entered have estimates within 15% of your saved reference for all four nutrients. It does not verify how much you actually ate or whether your needs were met.{% else %}Marked days show where foods have been recorded. They are not scores or judgments.{% endif %}</p>
+</section>
 <section class="panel diary-panel diary-history"><div class="section-heading"><div><span class="eyebrow">YOUR HISTORY</span><h2>Recent diary days</h2></div></div>
 {% if history %}<div class="diary-history-grid">{% for h in history %}<a class="diary-history-day {% if h.log_date==diary_date %}selected{% endif %}" href="/food-diary?day={{h.log_date}}"><strong>{{h.log_date}}</strong><small>{{h.entries}} recorded {{'item' if h.entries==1 else 'items'}}{% if adult and h.known %} · ~{{h.calories|round|int}} kcal recorded{% endif %}</small></a>{% endfor %}</div>
 {% else %}<p class="muted">When you start recording foods, the days will appear here.</p>{% endif %}
-<p class="muted">No daily targets or completion streaks are assigned. Your journal is private to your account.</p>
+<p class="muted">Your journal is private to your account. Calendar markers represent recorded data, not a health assessment.</p>
 </section>
 <div class="diary-modal" id="diary-modal" hidden>
  <div class="diary-shade" id="diary-shade"></div><div class="diary-dialog" role="dialog" aria-modal="true" aria-labelledby="diary-dialog-title">
@@ -67,6 +89,6 @@
   <button class="btn primary diary-save" type="submit">Save to {{diary_date}} ↗</button>
  </form></div>
 </div>
-<link rel="stylesheet" href="/static/css/food-diary.css?v=1">
+<link rel="stylesheet" href="/static/css/food-diary.css?v=2">
 <script type="module" src="/static/js/food-diary.js?v=1"></script>
 {% endblock %}
