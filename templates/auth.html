@@ -2,28 +2,17 @@
 <section class="auth-center"><div class="auth-box"><a class="auth-back" href="/" aria-label="Back to welcome page">← <span>Back to welcome</span></a><div class="auth-logo"><span>S</span> Smart<span>Fit</span></div><h1 id="auth-heading">{% if mode == 'login' %}Welcome back{% else %}Create your account{% endif %}</h1><p class="auth-subtitle" id="auth-description">{% if mode == 'login' %}Continue your SmartFit journey.{% else %}Your fitness journey starts here.{% endif %}</p>
 {% if error %}<p class="alert" role="alert">{{ error }}</p>{% endif %}
 {% if google_ready %}<a class="auth-google" href="/auth/google"><span class="google-g">G</span> Continue with Google</a><div class="auth-divider"><span>or use email</span></div>{% endif %}
-<div class="auth-tabs" role="tablist" aria-label="Account access"><button type="button" class="{% if mode != 'login' %}active{% endif %}" data-auth-tab="signup" aria-selected="{{ 'true' if mode != 'login' else 'false' }}">Sign Up</button><button type="button" class="{% if mode == 'login' %}active{% endif %}" data-auth-tab="login" aria-selected="{{ 'true' if mode == 'login' else 'false' }}">Log In</button></div>
-<form id="auth-signup" action="/signup" method="post" {% if mode == 'login' %}hidden{% endif %}><input type="hidden" name="token" value="{{csrf}}"><label>Email<input type="email" name="email" placeholder="you@example.com" autocomplete="email" required></label><label>Password (10+ characters)<input type="password" name="password" minlength="10" autocomplete="new-password" required></label><label>Confirm password<input type="password" name="confirm" minlength="10" autocomplete="new-password" required></label><button class="auth-submit" type="submit">Create account →</button></form>
-<form id="auth-login" action="/login" method="post" {% if mode != 'login' %}hidden{% endif %}><input type="hidden" name="token" value="{{csrf}}"><label>Email<input type="email" name="email" placeholder="you@example.com" autocomplete="email" required></label><label>Password<input type="password" name="password" autocomplete="current-password" required></label><button class="auth-submit" type="submit">Log in →</button></form>
+
+{% if mode != 'login' %}
+<form id="auth-signup" action="/signup" method="post"><input type="hidden" name="token" value="{{csrf}}"><label>Email<input type="email" name="email" placeholder="you@example.com" autocomplete="email" required></label><label>Password (10+ characters)<input type="password" name="password" minlength="10" autocomplete="new-password" required></label><label>Confirm password<input type="password" name="confirm" minlength="10" autocomplete="new-password" required></label><button class="auth-submit" type="submit">Create account →</button></form>
+{% else %}
+<form id="auth-login" action="/login" method="post"><input type="hidden" name="token" value="{{csrf}}"><label>Email<input type="email" name="email" placeholder="you@example.com" autocomplete="email" required></label><label>Password<input type="password" name="password" autocomplete="current-password" required></label><button class="auth-submit" type="submit">Log in →</button></form>
+{% endif %}
+<p class="auth-switch">{% if mode == 'login' %}New to SmartFit? <a href="/sign-up">Create an account</a>{% else %}Already have an account? <a href="/sign-in">Sign in</a>{% endif %}</p>
 {% if not google_ready %}<p class="auth-note">Google sign-in will appear after OAuth credentials are configured.</p>{% endif %}
 </div></section>
 <script>
 (() => {
-  const heading = document.getElementById('auth-heading');
-  const description = document.getElementById('auth-description');
-  const signupForm = document.getElementById('auth-signup');
-  const loginForm = document.getElementById('auth-login');
-  document.querySelectorAll('[data-auth-tab]').forEach(button => button.addEventListener('click', () => {
-    const signup = button.dataset.authTab === 'signup';
-    signupForm.hidden = !signup;
-    loginForm.hidden = signup;
-    heading.textContent = signup ? 'Create your account' : 'Welcome back';
-    description.textContent = signup ? 'Your fitness journey starts here.' : 'Continue your SmartFit journey.';
-    document.querySelectorAll('[data-auth-tab]').forEach(tab => {
-      tab.classList.toggle('active', tab === button);
-      tab.setAttribute('aria-selected', String(tab === button));
-    });
-  }));
   document.querySelectorAll('.auth-box input[type="password"]').forEach((field, i) => {
     const wrap = document.createElement('span');
     wrap.className = 'auth-password-wrap';
