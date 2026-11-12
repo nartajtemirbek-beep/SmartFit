@@ -42,25 +42,29 @@ body.logged-in:has(.goal-onboarding) .page-content{padding:0!important;max-width
 .goal-step,.goal-overline{font-size:12px;letter-spacing:2px;color:#f0808f;font-weight:800}.goal-step span{color:#60616a}
 .goal-intro{margin-bottom:32px}.goal-intro h1{font-weight:850;font-size:clamp(40px,6vw,75px);letter-spacing:-2.8px;line-height:1.08;margin:12px 0}.goal-intro p{color:#b9bac3;font-size:16px;line-height:1.5;margin:0}
 .goal-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
-.goal-card{height:clamp(270px,32vw,410px);min-width:0;display:block;position:relative;cursor:pointer;border:2px solid #38373c;overflow:hidden;border-radius:17px;background:#1b1c22;isolation:isolate;transition:transform .2s,border-color .2s,box-shadow .2s}
+.goal-card{height:clamp(300px,33vw,430px);min-width:0;display:block;position:relative;cursor:pointer;border:2px solid #38373c;overflow:hidden;border-radius:17px;background:#1b1c22;isolation:isolate;transition:transform .2s,border-color .2s,box-shadow .2s}
 .goal-card:hover{transform:translateY(-5px);border-color:#a67b84}.goal-card:has(input:checked){border-color:#f15d73;box-shadow:0 0 0 2px #f15d7370,0 15px 35px #0007}
 .goal-card:has(input:focus-visible){outline:3px solid #fff;outline-offset:4px}
 .goal-card input{position:absolute;opacity:0;width:1px;height:1px;top:0;left:0}
 .goal-cover,.goal-overlay{position:absolute;inset:0;display:block;z-index:-1}
-.goal-cover{background-image:url('/static/img/smartfit-goals.webp');background-repeat:no-repeat;background-size:500% 100%;filter:saturate(.88);transition:transform .4s ease}
-.goal-card:hover .goal-cover{transform:scale(1.04)}
-.goal-cover-1{background-position:0% center}.goal-cover-2{background-position:25% center}.goal-cover-3{background-position:50% center}.goal-cover-4{background-position:75% center}.goal-cover-5{background-position:100% center}
-.goal-overlay{background:linear-gradient(0deg,#09090deF 0%,#09090da8 20%,#0b0b1020 65%,#0b0b1025 100%)}
+.goal-cover{background-repeat:no-repeat;background-size:cover;background-position:center;filter:saturate(.94);transition:transform .4s ease}
+.goal-card:hover .goal-cover{transform:scale(1.035)}
+.goal-cover-1{background-image:url('/static/img/goal-strength.webp');background-position:48% 50%}
+.goal-cover-2{background-image:url('/static/img/goal-endurance.webp');background-position:56% 50%}
+.goal-cover-3{background-image:url('/static/img/goal-aesthetics.webp');background-position:50% 41%}
+.goal-cover-4{background-image:url('/static/img/goal-general.webp');background-position:50% 48%}
+.goal-cover-5{background-image:url('/static/img/goal-wellbeing.webp');background-position:50% 50%}
+.goal-overlay{background:linear-gradient(0deg,rgba(7,8,12,.94) 0%,rgba(7,8,12,.71) 19%,rgba(8,9,13,.12) 60%,rgba(8,9,13,.12) 100%)}
 .goal-check{position:absolute;right:14px;top:14px;display:grid;place-items:center;width:31px;height:31px;border-radius:50%;border:1px solid #fff8;background:#e95267;color:white;opacity:0;transform:scale(.7);transition:.2s;font-weight:bold}
 .goal-card:has(input:checked) .goal-check{opacity:1;transform:scale(1)}
 .goal-copy{position:absolute;bottom:0;left:0;right:0;padding:20px 16px 21px;display:flex;flex-direction:column;gap:8px}
 .goal-number{font-size:11px;letter-spacing:2px;color:#ff8d9b;font-weight:800}
-.goal-copy strong{font-size:clamp(16px,1.5vw,23px);line-height:1.14;letter-spacing:-.3px}
+.goal-copy strong{font-size:clamp(16px,1.45vw,22px);line-height:1.2;letter-spacing:-.15px;overflow-wrap:anywhere}
 .goal-info{color:#e0dce1;font-size:12px;line-height:1.5}
 .goal-bottom{margin-top:29px}.goal-bottom p{color:#a8a8b1;font-size:13px}.goal-next{display:flex;align-items:center;justify-content:space-between;gap:38px;min-width:210px;border:0;border-radius:11px;background:#e95368;color:white;padding:18px 24px;font-size:13px;font-weight:850;letter-spacing:1px;cursor:pointer}
 .goal-next:hover{background:#ff6b80}.goal-next:focus-visible{outline:3px solid #fff;outline-offset:3px}
-@media(max-width:1100px){.goal-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.goal-card{height:330px}.goal-head{padding-bottom:45px}}
-@media(max-width:650px){.goal-onboarding{padding:23px 16px 35px}.goal-head{padding-bottom:38px}.goal-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.goal-card{height:270px}.goal-card:last-child{grid-column:1/-1;height:220px}.goal-copy{padding:13px}.goal-copy strong{font-size:17px}.goal-bottom{flex-direction:column;align-items:stretch;gap:8px}.goal-next{justify-content:center}}
+@media(max-width:1100px){.goal-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.goal-card{height:350px}.goal-head{padding-bottom:45px}}
+@media(max-width:650px){.goal-onboarding{padding:23px 16px 35px}.goal-head{padding-bottom:38px}.goal-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.goal-card{height:290px}.goal-card:last-child{grid-column:1/-1;height:220px}.goal-copy{padding:13px}.goal-copy strong{font-size:17px}.goal-bottom{flex-direction:column;align-items:stretch;gap:8px}.goal-next{justify-content:center}}
 @media(prefers-reduced-motion:reduce){.goal-card,.goal-cover,.goal-check{transition:none!important}}
 </style>
 {% endblock %}
