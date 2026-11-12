@@ -16,10 +16,10 @@
         ('Improve endurance','ENDURANCE','Build stamina through consistent activity.'),
         ('Aesthetics','AESTHETICS','Follow a balanced training routine.'),
         ('General fitness','GENERAL FITNESS','Stay active with varied workouts.'),
-        ('Weight management','WELLBEING','Build sustainable activity habits.')
+        ('Weight management','WEIGHT MANAGEMENT','Build sustainable activity habits.')
         ] %}
           <label class="goal-card">
-            <input type="radio" name="fitness_goal" value="{{g[0]}}" {% if selected == g[0] or (not selected and g[0]=='General fitness') %}checked{% endif %} required>
+            <input type="radio" name="fitness_goal" value="{{g[0]}}" {% if selected == g[0] %}checked{% endif %} required>
             <span class="goal-cover goal-cover-{{loop.index}}" aria-hidden="true"></span>
             <span class="goal-overlay" aria-hidden="true"></span>
             <span class="goal-check" aria-hidden="true">✓</span>
