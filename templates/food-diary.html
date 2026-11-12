@@ -1,5 +1,5 @@
 {% extends 'base.html' %}{% block content %}
-<div class="intro"><div class="eyebrow">NUTRITION · YOUR PRIVATE JOURNAL</div><h1>Food Diary</h1><p>Remember what you ate, explore meal ideas, and revisit past days. Food values are only estimates.</p></div>
+<div class="intro"><div class="eyebrow">NUTRITION · YOUR PRIVATE JOURNAL</div><h1>Food Diary</h1><p>Remember what you ate, explore meal ideas, and revisit past days. Food values are only estimates.</p><a class="btn secondary" href="#food-diary-calendar" style="margin-top:12px">View nutrition calendar ↓</a></div>
 {% if adult %}
 <section class="panel diary-panel diary-goal-panel" aria-labelledby="diary-goal-title">
   <div class="diary-goal-heading"><div><span class="eyebrow">SAVED NUTRITION REFERENCE</span><h2 id="diary-goal-title">Your daily KБЖУ reference</h2></div><a class="btn secondary" href="/meal#daily-nutrition-title">Recalculate ↗</a></div>
@@ -52,7 +52,7 @@
   </div>
   {% else %}<div class="diary-overview"><span class="eyebrow">A FLEXIBLE JOURNAL</span><h3>Nourishment is more than numbers</h3><p>Meals can include carbohydrates for energy, protein for recovery, helpful fats, fruit or vegetables, and fluids. Missing an entry doesn't mean you've missed a goal.</p></div>{% endif %}
 </section>
-<section class="panel diary-panel diary-calendar-panel" aria-label="Food diary calendar">
+<section id="food-diary-calendar" class="panel diary-panel diary-calendar-panel" aria-label="Food diary calendar">
   <div class="diary-calendar-header"><div><span class="eyebrow">YOUR MEAL JOURNAL</span><h2>{{ calendar_heading }}</h2></div><div class="diary-calendar-nav"><a href="/food-diary?day={{diary_date}}&month={{calendar_previous}}" aria-label="Previous month">‹</a>{% if calendar_next %}<a href="/food-diary?day={{diary_date}}&month={{calendar_next}}" aria-label="Next month">›</a>{% endif %}</div></div>
   <div class="diary-calendar-grid" role="group" aria-label="{{calendar_heading}}">
     {% for label in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}<div class="diary-calendar-weekday">{{label}}</div>{% endfor %}
