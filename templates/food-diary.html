@@ -44,7 +44,7 @@
   {% else %}<div class="diary-overview"><span class="eyebrow">A FLEXIBLE JOURNAL</span><h3>Nourishment is more than numbers</h3><p>Meals can include carbohydrates for energy, protein for recovery, helpful fats, fruit or vegetables, and fluids. Missing an entry doesn't mean you've missed a goal.</p></div>{% endif %}
 </section>
 <section class="panel diary-panel diary-history"><div class="section-heading"><div><span class="eyebrow">YOUR HISTORY</span><h2>Recent diary days</h2></div></div>
-{% if history %}<div class="diary-history-grid">{% for h in history %}<a class="diary-history-day {% if h.log_date==diary_date %}selected{% endif %}" href="/food-diary?day={{h.log_date}}"><strong>{{h.log_date}}</strong><small>{{h.entries}} recorded {{'item' if h.entries==1 else 'items'}}</small></a>{% endfor %}</div>
+{% if history %}<div class="diary-history-grid">{% for h in history %}<a class="diary-history-day {% if h.log_date==diary_date %}selected{% endif %}" href="/food-diary?day={{h.log_date}}"><strong>{{h.log_date}}</strong><small>{{h.entries}} recorded {{'item' if h.entries==1 else 'items'}}{% if adult and h.known %} · ~{{h.calories|round|int}} kcal recorded{% endif %}</small></a>{% endfor %}</div>
 {% else %}<p class="muted">When you start recording foods, the days will appear here.</p>{% endif %}
 <p class="muted">No daily targets or completion streaks are assigned. Your journal is private to your account.</p>
 </section>
