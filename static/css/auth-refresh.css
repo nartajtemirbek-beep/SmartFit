@@ -32,3 +32,5 @@ body.guest{background:radial-gradient(circle at 50% 0%,#26191f 0%,#111115 55%,#0
 @keyframes sf-auth-enter{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:480px){.auth-box{padding:22px 20px 26px}.auth-back{margin-bottom:10px}}
 @media(prefers-reduced-motion:reduce){.auth-box{animation:none!important}.auth-back{transition:none!important}}
+
+.auth-switch{text-align:center;color:#aaa5b2;font-size:13px;margin:20px 0 0}.auth-switch a{color:#ff8191;font-weight:750;text-decoration:none}.auth-switch a:hover{text-decoration:underline}.auth-switch a:focus-visible{outline:2px solid #ff8191;outline-offset:3px}
