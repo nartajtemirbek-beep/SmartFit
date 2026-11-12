@@ -71,7 +71,10 @@ def plan_for(profile, variant=0):
     experience = profile["experience"] if profile["experience"] in ACTIVITIES[equipment] else "Beginner"
     variant = int(variant) % len(PLAN_NAMES)
     options = ACTIVITIES[equipment][experience]
-    goal = str(profile.get("fitness_goal", "General fitness")) if hasattr(profile, "get") else str(profile["fitness_goal"] if "fitness_goal" in profile else "General fitness")
+    try:
+        goal = str(profile["fitness_goal"])
+    except (KeyError, IndexError, TypeError):
+        goal = "General fitness"
     schedule = []
     for i in range(days):
         if i in (3, 6):
