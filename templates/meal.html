@@ -60,6 +60,15 @@
         <div><small>Carbs</small><strong id="daily-carbs">—</strong><small>g/day</small></div>
       </div>
     </div>
+    <form id="save-nutrition-goal" action="/nutrition-goal" method="post" hidden class="nutrition-goal-save">
+      <input type="hidden" name="token" value="{{csrf}}">
+      <input type="hidden" name="energy" id="save-nutrition-energy">
+      <input type="hidden" name="protein" id="save-nutrition-protein">
+      <input type="hidden" name="fat" id="save-nutrition-fat">
+      <input type="hidden" name="carbs" id="save-nutrition-carbs">
+      <button type="submit" class="btn primary">Save KБЖУ reference to Food Diary ↗</button>
+      <p class="muted">Save this optional adult maintenance estimate to display it above your meal journal. You can replace or remove it later.</p>
+    </form>
     <p class="muted nutrition-note" id="daily-guide-explanation">For adults only. Uses a lean-body-mass formula and a self-selected activity factor. Height and training goal provide context but do not enter this formula. The goal-specific macro proportions are an illustration, not medical advice or a target to restrict food intake. Body-fat estimates can be inaccurate; nothing is stored.</p>
   {% endif %}
 </section>
@@ -141,7 +150,10 @@
 .daily-guide-controls label{font-weight:650;font-size:13px;color:#dfdce4}
 .daily-guide-controls input,.daily-guide-controls select{display:block;margin-top:8px;min-height:45px;width:100%;background:#121219;color:#fff;border:1px solid #51414d;border-radius:10px;padding:9px 12px}
 .daily-guide-controls button{min-height:45px}
-.daily-estimate-output{margin-top:18px}.daily-estimate-output[hidden]{display:none!important}
+.daily-estimate-output{margin-top:18px}.daily-estimate-output[hidden],.nutrition-goal-save[hidden]{display:none!important}
+.nutrition-goal-save{margin-top:17px;padding:16px 17px;border:1px solid #754758;border-radius:12px;background:#30232d;display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.nutrition-goal-save p{margin:0;flex:1;min-width:190px;font-size:12px;line-height:1.5}
+@media(max-width:650px){.nutrition-goal-save button{width:100%}}
 .daily-estimate-output h3{font-size:18px;margin-bottom:14px}
 .daily-macro-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
 .daily-macro-grid>div{display:flex;flex-direction:column;gap:7px;padding:18px 13px;background:#24212b;border:1px solid #473342;border-radius:12px}
@@ -219,6 +231,8 @@
     const activity = Number(document.getElementById('daily-activity').value);
     if (age < 18 || !Number.isFinite(weight) || weight <= 0 || !Number.isFinite(bodyFat) || bodyFat < 5 || bodyFat > 60 || !Number.isFinite(activity)) {
       output.hidden = true;
+      const saveForm=document.getElementById('save-nutrition-goal');
+      if(saveForm)saveForm.hidden=true;
       explanation.textContent = 'Enter a body-fat estimate between 5% and 60% to view an illustrative estimate. It does not need to be saved.';
       return;
     }
@@ -248,6 +262,14 @@
     document.getElementById('daily-fat').textContent = macros.fat;
     document.getElementById('daily-carbs').textContent = macros.carbs;
     output.hidden = false;
+    const saveForm=document.getElementById('save-nutrition-goal');
+    if(saveForm){
+      document.getElementById('save-nutrition-energy').value=String(macros.energy);
+      document.getElementById('save-nutrition-protein').value=String(macros.protein);
+      document.getElementById('save-nutrition-fat').value=String(macros.fat);
+      document.getElementById('save-nutrition-carbs').value=String(macros.carbs);
+      saveForm.hidden=false;
+    }
     explanation.textContent = 'Adult maintenance illustration (Katch–McArdle + activity factor). For '+selectedGoal+', the educational macro split shown is '+Math.round(proteinPart*100)+'% protein, '+Math.round(fatPart*100)+'% fat and '+Math.round(carbPart*100)+'% carbohydrates. Your fitness goal changes this illustrative split, not the maintenance-calorie estimate. No deficit or surplus is automatically prescribed. Height is not used in this formula. Estimates can be inaccurate and are not saved.';
   });
 })();
