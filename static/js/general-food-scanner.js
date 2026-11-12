@@ -71,7 +71,17 @@ function renderSelected() {
     input.addEventListener('input',update);
     label.append(input);
     renderMetrics(metrics,Object.fromEntries(nutrients.map(([key])=>[key,item.per100g[key]*weight/100])));
-    row.append(header,label,metrics);
+    const diaryButton=make('button','btn primary','Add to Food Diary →');
+    diaryButton.type='button';diaryButton.style.marginTop='10px';
+    diaryButton.addEventListener('click',()=>{
+      const amount=selection.get(id);
+      if(!Number.isFinite(amount)||amount<1||amount>10000)return;
+      sessionStorage.setItem('smartfit_food_transfer',JSON.stringify({
+        name:item.name,amount,per100g:item.per100g,source:'photo'
+      }));
+      window.location.href='/food-diary';
+    });
+    row.append(header,label,metrics,diaryButton);
     selectedList.append(row);
   }
   selectedBox.hidden = selection.size===0;

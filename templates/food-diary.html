@@ -1,0 +1,72 @@
+{% extends 'base.html' %}{% block content %}
+<div class="intro"><div class="eyebrow">NUTRITION · YOUR PRIVATE JOURNAL</div><h1>Food Diary</h1><p>Remember what you ate, explore meal ideas, and revisit past days. Food values are only estimates.</p></div>
+<section class="panel diary-panel">
+  <div class="diary-head"><div><span class="eyebrow">SELECTED DATE</span><h2>{{ diary_date }}</h2></div>
+    <form method="get" action="/food-diary" class="diary-day-picker"><label for="diary-day">Choose day</label><input type="date" id="diary-day" name="day" value="{{diary_date}}" max="{{today}}" required><button class="btn secondary">View day</button></form>
+  </div>
+  <div class="diary-context">
+    <span>Training focus: <strong>{{ fitness_goal }}</strong></span>
+    {% if adult %}<span>Nutrition labels and amounts are approximate. Days do not need to match exact targets.</span>
+    {% else %}<span>Regular eating and variety support growth and activity. There are no calorie goals or streaks here.</span>{% endif %}
+  </div>
+  {% set groups = [('Breakfast','☀','Morning meal'),('Lunch','◉','Midday meal'),('Dinner','◕','Evening meal'),('Snacks','✦','Snacks & extras')] %}
+  {% for meal, symbol, subtitle in groups %}
+  <section class="diary-meal" aria-label="{{meal}}">
+    <div class="diary-meal-header"><div class="diary-meal-icon">{{symbol}}</div><div class="diary-meal-heading"><h3>{{meal}}</h3><small>{{subtitle}}</small></div>
+      <button class="diary-add" type="button" data-meal="{{meal}}" aria-label="Add food to {{meal}}"><span aria-hidden="true">＋</span> Add food</button></div>
+    {% set matching = entries|selectattr('meal_type','equalto',meal)|list %}
+    {% if matching %}
+      {% for item in matching %}
+      <div class="diary-item"><div class="diary-food"><b>{{item.food_name}}</b><small>{{item.food_source|capitalize}}{% if adult and item.amount_g %} · {{item.amount_g|round|int}} g{% endif %}</small></div>
+        {% if adult and item.calories is not none %}<div class="diary-numbers">{{item.calories|round|int}} <small>kcal</small></div>{% endif %}
+        <form method="post" action="/api/food-diary/delete"><input type="hidden" name="token" value="{{csrf}}"><input type="hidden" name="day" value="{{diary_date}}"><input type="hidden" name="entry_id" value="{{item.id}}"><button class="diary-delete" type="submit" aria-label="Remove {{item.food_name}}">Remove</button></form></div>
+      {% endfor %}
+      {% if adult %}{% set subtotal = namespace(calories=0,protein=0,fat=0,carbs=0,known=0) %}
+        {% for item in matching %}{% if item.calories is not none %}{% set subtotal.calories=subtotal.calories+item.calories %}{% set subtotal.known=subtotal.known+1 %}{% endif %}
+        {% if item.protein is not none %}{% set subtotal.protein=subtotal.protein+item.protein %}{% endif %}
+        {% if item.fat is not none %}{% set subtotal.fat=subtotal.fat+item.fat %}{% endif %}
+        {% if item.carbohydrates is not none %}{% set subtotal.carbs=subtotal.carbs+item.carbohydrates %}{% endif %}{% endfor %}
+        {% if subtotal.known %}<p class="diary-meal-subtotal">Recorded estimates: {{subtotal.calories|round|int}} kcal · P {{subtotal.protein|round(1)}} g · F {{subtotal.fat|round(1)}} g · C {{subtotal.carbs|round(1)}} g</p>{% endif %}
+      {% endif %}
+    {% else %}<p class="diary-empty">Nothing recorded for {{meal|lower}}. Add something whenever you like.</p>{% endif %}
+  </section>
+  {% endfor %}
+  {% if adult %}
+  {% set total=namespace(calories=0,protein=0,fat=0,carbs=0,known=0) %}
+  {% for item in entries %}{% if item.calories is not none %}{% set total.calories=total.calories+item.calories %}{% set total.known=total.known+1 %}{% endif %}
+  {% if item.protein is not none %}{% set total.protein=total.protein+item.protein %}{% endif %}
+  {% if item.fat is not none %}{% set total.fat=total.fat+item.fat %}{% endif %}
+  {% if item.carbohydrates is not none %}{% set total.carbs=total.carbs+item.carbohydrates %}{% endif %}{% endfor %}
+  <div class="diary-overview"><div><span class="eyebrow">DAILY RECORD · APPROXIMATE</span><h3>Nutrition recorded</h3></div>
+    <div class="diary-metrics"><div><small>Energy</small><strong>{{total.calories|round|int if total.known else '—'}}</strong><small>kcal</small></div><div><small>Protein</small><strong>{{total.protein|round(1) if total.known else '—'}}</strong><small>g</small></div><div><small>Fat</small><strong>{{total.fat|round(1) if total.known else '—'}}</strong><small>g</small></div><div><small>Carbs</small><strong>{{total.carbs|round(1) if total.known else '—'}}</strong><small>g</small></div></div>
+    <p class="muted">These are approximate totals for entries with available nutrition data, not a measure of whether you ate enough. Unrecorded foods are not included.</p>
+  </div>
+  {% else %}<div class="diary-overview"><span class="eyebrow">A FLEXIBLE JOURNAL</span><h3>Nourishment is more than numbers</h3><p>Meals can include carbohydrates for energy, protein for recovery, helpful fats, fruit or vegetables, and fluids. Missing an entry doesn't mean you've missed a goal.</p></div>{% endif %}
+</section>
+<section class="panel diary-panel diary-history"><div class="section-heading"><div><span class="eyebrow">YOUR HISTORY</span><h2>Recent diary days</h2></div></div>
+{% if history %}<div class="diary-history-grid">{% for h in history %}<a class="diary-history-day {% if h.log_date==diary_date %}selected{% endif %}" href="/food-diary?day={{h.log_date}}"><strong>{{h.log_date}}</strong><small>{{h.entries}} recorded {{'item' if h.entries==1 else 'items'}}{% if adult and h.known %} · ~{{h.calories|round|int}} kcal recorded{% endif %}</small></a>{% endfor %}</div>
+{% else %}<p class="muted">When you start recording foods, the days will appear here.</p>{% endif %}
+<p class="muted">No daily targets or completion streaks are assigned. Your journal is private to your account.</p>
+</section>
+<div class="diary-modal" id="diary-modal" hidden>
+ <div class="diary-shade" id="diary-shade"></div><div class="diary-dialog" role="dialog" aria-modal="true" aria-labelledby="diary-dialog-title">
+ <div class="diary-dialog-head"><div><span class="eyebrow">ADD TO YOUR JOURNAL</span><h2 id="diary-dialog-title">Add food</h2></div><button type="button" id="diary-close" aria-label="Close dialog">✕</button></div>
+ <div class="diary-methods"><button type="button" id="diary-method-search" class="selected">Search by name</button><a href="/meal#food-scanner-title" id="diary-photo-link">Photo scanner ↗</a><a href="/meal#barcode-title" id="diary-barcode-link">Barcode scanner ↗</a></div>
+ <div class="diary-search"><label for="diary-search-input">Find a food</label><div class="diary-search-row"><input type="search" id="diary-search-input" placeholder="e.g. rice, yogurt, bread" autocomplete="off"><button type="button" class="btn secondary" id="diary-search-button">Search</button></div>
+  <p class="muted">Search the common-food catalog or the external nutrition references. Or type your own food name below.</p><div id="diary-search-status" role="status" aria-live="polite"></div><div id="diary-search-results" class="diary-results"></div></div>
+ <form method="post" action="/api/food-diary" id="diary-entry-form">
+  <input type="hidden" name="token" value="{{csrf}}"><input type="hidden" name="day" value="{{diary_date}}"><label for="diary-meal-type">Meal</label><select name="meal_type" id="diary-meal-type"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snacks</option></select><input type="hidden" name="food_source" id="diary-food-source" value="manual">
+  <label for="diary-food-name">Food name</label><input id="diary-food-name" name="food_name" maxlength="140" required placeholder="What did you eat?">
+  {% if adult %}<div class="diary-quantity"><label for="diary-amount">Amount (g, optional)<input id="diary-amount" name="amount_g" type="number" min="1" max="10000" step="1" placeholder="Approximate amount"></label>
+  <div class="diary-value-grid"><label>Energy (kcal)<input name="calories" type="number" min="0" max="100000" step="0.01" placeholder="If known"></label>
+  <label>Protein (g)<input name="protein" type="number" min="0" max="100000" step="0.01" placeholder="If known"></label>
+  <label>Fat (g)<input name="fat" type="number" min="0" max="100000" step="0.01" placeholder="If known"></label>
+  <label>Carbs (g)<input name="carbohydrates" type="number" min="0" max="100000" step="0.01" placeholder="If known"></label></div>
+  <p class="muted diary-amount-hint">Nutrition figures are estimates. You can leave these blank if you only know the food name.</p></div>{% else %}
+  <p class="muted">Just save the food name. No portion measurement or calorie targets needed.</p>{% endif %}
+  <button class="btn primary diary-save" type="submit">Save to {{diary_date}} ↗</button>
+ </form></div>
+</div>
+<link rel="stylesheet" href="/static/css/food-diary.css?v=1">
+<script type="module" src="/static/js/food-diary.js?v=1"></script>
+{% endblock %}
