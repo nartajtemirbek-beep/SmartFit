@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111217">
+<title>SmartFit — Music Mode</title>
+<link rel="icon" href="/static/img/favicon.svg?v=2" type="image/svg+xml">
+<style>
+:root{color-scheme:dark;--coral:#f46e80;--bg:#181820;--text:#f7f4f8;--muted:#ada4b2}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:#0e0f14;color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+#sf-workspace{display:block;position:fixed;inset:0;width:100%;height:100%;border:0;background:#0e0f14}
+.player-dock{position:fixed;z-index:1000;right:19px;bottom:20px;width:min(365px,calc(100vw - 30px));border:1px solid #654654;border-radius:18px;background:linear-gradient(145deg,#271e27 0%,#1a1b23 75%);box-shadow:0 18px 60px #0009,0 0 24px #76334212;overflow:hidden}
+.dock-head{display:flex;align-items:center;gap:11px;min-height:65px;padding:9px 12px;background:transparent}
+.dock-art{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#ac485f,#592d40);color:#ffced7}
+.dock-art svg{width:25px;height:25px}
+.dock-name{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
+.dock-name strong{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dock-name small{font-size:11px;color:#c8afbb;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dock-btn{display:grid;place-items:center;flex:none;width:36px;height:36px;border:1px solid #775163;border-radius:11px;background:#493040;color:#fff;cursor:pointer}
+.dock-btn:hover{background:#634054}.dock-btn:focus-visible,.dock-button:focus-visible,.dock-body :focus-visible{outline:2px solid #ff9aaa;outline-offset:2px}
+.dock-btn svg{width:20px;height:20px}
+.dock-body{padding:0 12px 12px;display:grid;gap:8px}
+.dock-body[hidden]{display:none}
+.dock-meta{display:flex;align-items:center;gap:8px;font-size:11px;color:#b4a6b4}
+.dock-label{display:inline-flex;align-items:center;gap:6px}
+.dock-dot{width:7px;height:7px;background:var(--coral);border-radius:50%}
+.dock-save-line{display:grid;grid-template-columns:1fr auto;gap:8px}
+.dock-body label{display:grid;gap:6px;font-size:11px;color:#dbbfca}
+.dock-body input,.dock-body select{width:100%;min-width:0;padding:9px 10px;border-radius:9px;border:1px solid #604b5b;background:#151620;color:#fff;font:inherit;font-size:12px}
+.dock-button{padding:10px 12px;align-self:end;border:1px solid #885365;border-radius:9px;background:#74384b;color:#fff;font-size:12px;font-weight:700;cursor:pointer}
+.dock-button:hover{background:#94455a}
+.dock-iframe{width:100%;border-radius:12px;overflow:hidden;background:#191920;outline:1px solid #66515a55;outline-offset:0}
+.dock-iframe:empty{display:none}
+.dock-iframe iframe{display:block;width:100%;max-width:100%;border:0;border-radius:12px;background:#15161c}
+/* Quiet burgundy appearance: tone down Spotify artwork-derived bright red without altering playback. */
+
+.dock-controls{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.dock-controls button,.dock-controls a{font:inherit;font-size:11px;color:#ffc0c9;background:transparent;border:0;padding:5px 0;cursor:pointer;text-decoration:none}
+.dock-controls button:hover,.dock-controls a:hover{text-decoration:underline}
+#dock-message{font-size:11px;color:#bcb1bd;line-height:1.45;margin:0}
+#dock-message.error{color:#ff9dad}
+.player-dock.is-collapsed .dock-body{position:absolute;top:100%;left:0;width:100%;opacity:0;pointer-events:none}
+.player-dock.is-collapsed .dock-head{min-height:66px}
+.player-dock.is-collapsed .dock-art{width:42px;height:42px}
+.app-exit{position:absolute;top:0;right:0}
+@media(max-width:650px){
+  .player-dock{right:0;bottom:0;width:100%;border-radius:17px 17px 0 0;border-left:0;border-right:0;border-bottom:0;box-shadow:0 -10px 40px #000b}
+  .dock-head{min-height:61px;padding:9px 12px}
+  .dock-body{max-height:min(76vh,620px);overflow-y:auto;padding:0 12px max(14px,env(safe-area-inset-bottom))}
+  .dock-btn{width:37px;height:37px}
+  .player-dock.is-collapsed .dock-head{padding-bottom:max(10px,env(safe-area-inset-bottom))}
+}
+</style>
+</head>
+<body>
+<iframe id="sf-workspace" title="SmartFit dashboard and workout pages" src="/workouts" allow="fullscreen"></iframe>
+<section class="player-dock" id="player-dock" aria-label="SmartFit Music">
+  <div class="dock-head">
+    <span class="dock-art" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+    <div class="dock-name"><strong>SmartFit Music</strong><small id="dock-caption">Your workout playlist</small></div>
+    <button id="dock-toggle" class="dock-btn" type="button" aria-label="Collapse music player" aria-expanded="true" title="Expand or collapse">
+      <svg id="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>
+    </button>
+    <button id="dock-power" class="dock-btn" type="button" aria-label="Turn music off" title="Music On / Off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v10M5.6 5.6a9 9 0 1 0 12.8 0"/></svg></button>
+  </div>
+  <div id="dock-body" class="dock-body">
+    <div class="dock-meta"><span class="dock-label"><span class="dock-dot"></span><span id="dock-state">Music ON · Tap Play in the player</span></span></div>
+    <div class="dock-iframe" id="dock-frame"></div>
+    <p id="dock-message" role="status" aria-live="polite"></p>
+    <div class="dock-controls"><a href="https://open.spotify.com/" id="dock-external" target="_blank" rel="noopener noreferrer">Open in music service ↗</a><button type="button" id="dock-exit">Exit Music Mode</button></div>
+  </div>
+</section>
+<script defer src="/static/js/music-workspace.js?v=3"></script>
+</body>
+</html>
