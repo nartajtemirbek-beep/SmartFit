@@ -14,8 +14,23 @@
     <p class="muted">Complete your training profile to see your nutrition overview.</p><a class="btn secondary" href="/profile">Complete profile →</a>
   {% elif nutrition_profile.age < 18 %}
     <div class="daily-guide-note"><strong>Fuel your training and growth</strong>
-      <p>Your body needs enough food for everyday life, activity and development. Aim for regular, varied meals and include carbohydrates, protein sources, fats, fruits or vegetables and fluids.</p>
-      <p>SmartFit does not automatically set calorie or macro limits for people under 18. A qualified healthcare professional can help with individual needs.</p>
+      <p>Your body needs enough food for everyday life, activity and development. Regular meals with a variety of foods provide energy for learning, movement and recovery.</p>
+      <p>SmartFit does not automatically assign calorie or macro limits to growing users. A healthcare professional or registered dietitian can advise on individual needs.</p>
+    </div>
+    <div class="teen-fuel-guide" id="teen-fuel-guide">
+      <div class="teen-fuel-title"><h3>Your daily fueling guide</h3><p class="muted">Explore practical meal ideas for your schedule. No weighing, calorie limits or body-fat measurement required.</p></div>
+      <label for="teen-fuel-situation">What does your day look like?</label>
+      <select id="teen-fuel-situation">
+        <option value="everyday">A regular school or rest day</option>
+        <option value="before">I'm preparing for a workout</option>
+        <option value="after">I've finished a workout</option>
+        <option value="busy">A busy day with limited time</option>
+      </select>
+      <div class="teen-fuel-recommendations" id="teen-fuel-recommendations" aria-live="polite">
+        <strong>Everyday nourishment</strong>
+        <p>Eat regular meals and choose a mix of satisfying foods throughout the day. Include carbohydrates, protein sources, fats and produce.</p>
+      </div>
+      <p class="muted nutrition-note">Your saved fitness focus is <strong>{{ nutrition_profile.fitness_goal }}</strong>. The best nutrition habits support both activity and ongoing growth, whatever goal you choose.</p>
     </div>
   {% else %}
     <p class="muted">Your profile: {{ nutrition_profile.height_cm|round|int }} cm · {{ nutrition_profile.current_weight_kg|round(1) }} kg · {{ nutrition_profile.fitness_goal }}. Body-fat estimates are optional to know in real life, but this particular calculation needs an estimate.</p>
@@ -93,6 +108,13 @@
   <p class="muted nutrition-note">Camera barcode detection is supported only in some browsers. Manual code entry works even when camera scanning is unavailable.</p>
 </section>
 <style>
+.teen-fuel-guide{margin-top:18px;padding:20px;border:1px solid #47323e;background:#1c1b23;border-radius:14px}
+.teen-fuel-title h3{margin:0 0 7px;font-size:19px}.teen-fuel-title p{margin:0 0 19px}
+.teen-fuel-guide label{display:block;color:#eee7ee;font-weight:700;font-size:13px;margin-bottom:8px}
+.teen-fuel-guide select{background:#121219;border:1px solid #62505c;border-radius:10px;color:#fff;padding:12px;width:100%;min-height:44px}
+.teen-fuel-guide select:focus-visible{outline:2px solid #ff8796;outline-offset:2px}
+.teen-fuel-recommendations{margin-top:15px;padding:17px 18px;border:1px solid #61404b;border-radius:12px;background:#2b222b;line-height:1.6}
+.teen-fuel-recommendations strong{color:#ffd6de}.teen-fuel-recommendations p{margin:8px 0 0;color:#e4dce4}
 .daily-guide-note{background:linear-gradient(135deg,#302630,#202128);border:1px solid #4d3944;border-radius:14px;padding:18px 20px;line-height:1.65}
 .daily-guide-note strong{color:#ffd6df;font-size:17px}.daily-guide-note p{margin:10px 0;color:#ddd7df}
 .daily-guide-controls{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) auto;gap:14px;align-items:end}
@@ -194,6 +216,27 @@
     document.getElementById('daily-carbs').textContent = macros.carbs;
     output.hidden = false;
     explanation.textContent = 'Adult maintenance illustration only (Katch–McArdle + activity factor; 20% protein, 30% fat, 50% carbs). Not a weight-loss or weight-gain prescription. Your goal and height do not directly alter this equation. Measurements and actual needs vary; values are not saved.';
+  });
+})();
+</script>
+<script>
+(() => {
+  const selector = document.getElementById('teen-fuel-situation');
+  const panel = document.getElementById('teen-fuel-recommendations');
+  if (!selector || !panel) return;
+  const ideas = {
+    everyday: ['Everyday nourishment', 'Eat regular meals and choose a mix of satisfying foods throughout the day. Include carbohydrates, protein sources, fats and produce.'],
+    before: ['Before activity', 'Choose a comfortable snack or meal that provides energy, such as a banana with yogurt or toast with nut butter. Drink water and give yourself time to digest.'],
+    after: ['After activity', 'Have a satisfying meal or snack with both carbohydrates and a protein source, such as rice with beans or a sandwich with eggs. Rehydrate and rest.'],
+    busy: ['On a busy day', 'Easy options include a sandwich, fruit, yogurt, nuts or a packed meal. Make time to eat enough even when your schedule is full.']
+  };
+  selector.addEventListener('change', () => {
+    const [title, description] = ideas[selector.value] || ideas.everyday;
+    const heading = document.createElement('strong');
+    heading.textContent = title;
+    const paragraph = document.createElement('p');
+    paragraph.textContent = description;
+    panel.replaceChildren(heading,paragraph);
   });
 })();
 </script>
