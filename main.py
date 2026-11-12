@@ -606,7 +606,7 @@ def food_diary_page(request:Request,day:str='',month:str=''):
     if not p:return go('/profile')
     selected=diary_day(day or date.today().isoformat())
     # The month is explicitly navigable, independently of the selected day.
-    shown_month=selected.replace(day=1)
+    shown_month=date.fromisoformat(selected).replace(day=1)
     if month:
         try: shown_month=date.fromisoformat(month+'-01')
         except (ValueError,TypeError):raise HTTPException(400,'Invalid calendar month')
