@@ -5,11 +5,19 @@
   <h1>Food Scanner</h1>
   <p>Photo recognition with CLIP and a local everyday-food catalog, plus packaged-product barcode lookup. No paid AI keys needed.</p>
 </div>
-<section class="panel nutrition-panel daily-nutrition-panel" aria-labelledby="daily-nutrition-title">
+<section class="panel nutrition-panel daily-nutrition-panel" aria-labelledby="daily-nutrition-title" {% if nutrition_profile %}data-fitness-goal="{{ nutrition_profile.fitness_goal|e }}"{% endif %}>
   <div class="nutrition-section-title"><span class="nutrition-section-icon">00</span><div>
     <h2 id="daily-nutrition-title">Daily Nutrition Overview</h2>
     <p class="muted">Nutrition information tailored to your stage of life and training preferences.</p>
   </div></div>
+  {% if nutrition_profile %}
+  <div class="nutrition-goal-card" aria-labelledby="nutrition-goal-heading">
+    <div class="nutrition-goal-heading"><div><span class="nutrition-goal-eyebrow">YOUR SELECTED FOCUS</span><h3 id="nutrition-goal-heading">{{ nutrition_profile.fitness_goal }}</h3></div><a href="/choose-goal">Change goal ↗</a></div>
+    <p id="nutrition-goal-summary">Nutrition helps fuel activity, recovery and everyday health.</p>
+    <div class="nutrition-goal-tips" id="nutrition-goal-tips"></div>
+    <p class="muted nutrition-note">These are flexible food ideas, not rules or required amounts. Healthy nutrition includes enough dietary fat, carbohydrate and protein for all goals.</p>
+  </div>
+  {% endif %}
   {% if not nutrition_profile %}
     <p class="muted">Complete your training profile to see your nutrition overview.</p><a class="btn secondary" href="/profile">Complete profile →</a>
   {% elif nutrition_profile.age < 18 %}
@@ -50,7 +58,7 @@
         <div><small>Carbs</small><strong id="daily-carbs">—</strong><small>g/day</small></div>
       </div>
     </div>
-    <p class="muted nutrition-note" id="daily-guide-explanation">For adults only. Uses a lean-body-mass formula and a self-selected activity factor. Height and training goal provide context but do not enter this formula. The macro proportions are an illustration, not medical advice or a target to restrict food intake. Body-fat estimates can be inaccurate; nothing is stored.</p>
+    <p class="muted nutrition-note" id="daily-guide-explanation">For adults only. Uses a lean-body-mass formula and a self-selected activity factor. Height and training goal provide context but do not enter this formula. The goal-specific macro proportions are an illustration, not medical advice or a target to restrict food intake. Body-fat estimates can be inaccurate; nothing is stored.</p>
   {% endif %}
 </section>
 <section class="panel nutrition-panel" aria-labelledby="food-scanner-title">
@@ -108,6 +116,16 @@
   <p class="muted nutrition-note">Camera barcode detection is supported only in some browsers. Manual code entry works even when camera scanning is unavailable.</p>
 </section>
 <style>
+.nutrition-goal-card{margin:12px 0 22px;padding:19px 20px;border-radius:15px;border:1px solid #65414d;background:linear-gradient(120deg,#32222a,#201d26)}
+.nutrition-goal-heading{display:flex;align-items:center;justify-content:space-between;gap:15px}
+.nutrition-goal-heading h3{font-size:22px;margin:5px 0 9px;color:#fff}
+.nutrition-goal-heading a{color:#ff9ead;font-size:12px;font-weight:750;text-decoration:underline;text-underline-offset:3px}
+.nutrition-goal-eyebrow{font-size:10px;letter-spacing:1.8px;font-weight:850;color:#fa9cad}
+.nutrition-goal-card>p{line-height:1.65;color:#e3dae2;margin:7px 0 14px}
+.nutrition-goal-tips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.nutrition-goal-tip{padding:15px 13px;border:1px solid #54404b;border-radius:12px;background:#211d25;line-height:1.5;font-size:13px;color:#ddd5dd}
+.nutrition-goal-tip strong{display:block;color:#ffb6c0;font-size:12px;margin-bottom:8px}
+@media(max-width:760px){.nutrition-goal-tips{grid-template-columns:1fr}}
 .teen-fuel-guide{margin-top:18px;padding:20px;border:1px solid #47323e;background:#1c1b23;border-radius:14px}
 .teen-fuel-title h3{margin:0 0 7px;font-size:19px}.teen-fuel-title p{margin:0 0 19px}
 .teen-fuel-guide label{display:block;color:#eee7ee;font-weight:700;font-size:13px;margin-bottom:8px}
@@ -204,18 +222,31 @@
     }
     const leanMass = weight * (1 - bodyFat/100);
     const energy = Math.round((370 + 21.6*leanMass)*activity / 25)*25;
+    // Illustrative distributions, not individualized nutrition prescriptions.
+    // No calorie deficit, mandatory surplus, or low-fat target is assumed.
+    const distributions = {
+      'Build strength': [.25, .30, .45],
+      'Improve endurance': [.20, .25, .55],
+      'Aesthetics': [.25, .30, .45],
+      'General fitness': [.20, .30, .50],
+      'Weight management': [.20, .30, .50],
+      'Improve flexibility': [.20, .30, .50],
+      'Stay active': [.20, .30, .50]
+    };
+    const selectedGoal = document.querySelector('.daily-nutrition-panel')?.dataset.fitnessGoal || 'General fitness';
+    const [proteinPart, fatPart, carbPart] = distributions[selectedGoal] || distributions['General fitness'];
     const macros = {
       energy,
-      protein: Math.round((energy * .20 / 4)/5)*5,
-      fat: Math.round((energy * .30 / 9)/5)*5,
-      carbs: Math.round((energy * .50 / 4)/5)*5
+      protein: Math.round((energy * proteinPart / 4)/5)*5,
+      fat: Math.round((energy * fatPart / 9)/5)*5,
+      carbs: Math.round((energy * carbPart / 4)/5)*5
     };
     document.getElementById('daily-energy').textContent = macros.energy.toLocaleString('en-US');
     document.getElementById('daily-protein').textContent = macros.protein;
     document.getElementById('daily-fat').textContent = macros.fat;
     document.getElementById('daily-carbs').textContent = macros.carbs;
     output.hidden = false;
-    explanation.textContent = 'Adult maintenance illustration only (Katch–McArdle + activity factor; 20% protein, 30% fat, 50% carbs). Not a weight-loss or weight-gain prescription. Your goal and height do not directly alter this equation. Measurements and actual needs vary; values are not saved.';
+    explanation.textContent = 'Adult maintenance illustration (Katch–McArdle + activity factor). For '+selectedGoal+', the educational macro split shown is '+Math.round(proteinPart*100)+'% protein, '+Math.round(fatPart*100)+'% fat and '+Math.round(carbPart*100)+'% carbohydrates. Your fitness goal changes this illustrative split, not the maintenance-calorie estimate. No deficit or surplus is automatically prescribed. Height is not used in this formula. Estimates can be inaccurate and are not saved.';
   });
 })();
 </script>
@@ -238,6 +269,57 @@
     paragraph.textContent = description;
     panel.replaceChildren(heading,paragraph);
   });
+})();
+</script>
+<script>
+(() => {
+  const box = document.querySelector('.daily-nutrition-panel[data-fitness-goal]');
+  if (!box) return;
+  const goal = box.dataset.fitnessGoal;
+  const library = {
+    'Build strength': {
+      summary: 'Support strength training with regular meals, protein-containing foods and carbohydrates for working muscles.',
+      tips: [['Protein & recovery','Include foods such as eggs, beans, yogurt, fish or tofu across meals.'],['Energy for training','Rice, potatoes, bread and fruit can provide energy before and after activity.'],['Balanced fats','Include sources such as nuts, seeds and olive oil. Dietary fat is important too.']]
+    },
+    'Improve endurance': {
+      summary: 'Longer activity benefits from enough energy and carbohydrate-rich foods, along with fluids and recovery meals.',
+      tips: [['Carbohydrate fuel','Oats, bread, rice, potatoes and fruit can support sustained activity.'],['Fluids & recovery','Drink fluids regularly and eat satisfying meals after exercise.'],['Include all nutrients','Protein and fats still matter for tissue recovery and general health.']]
+    },
+    'Aesthetics': {
+      summary: 'Aim for consistent, balanced meals that support training, recovery and wellbeing — not a very low-fat diet.',
+      tips: [['Support training','Choose satisfying meals with carbohydrates and protein sources.'],['Keep healthy fats','Foods such as nuts, avocado and seeds have important roles.'],['Build a routine','Regular food, sleep and enjoyable activity matter more than rigid food rules.']]
+    },
+    'General fitness': {
+      summary: 'Variety and regular meals can support everyday movement, health and recovery.',
+      tips: [['Mix it up','Include grains, produce, protein foods and fats.'],['Fuel your day','Eat meals and snacks that fit your hunger and schedule.'],['Hydrate','Keep water available, especially during activity.']]
+    },
+    'Weight management': {
+      summary: 'Focus on sustainable nourishment and healthy routines rather than automatic calorie deficits.',
+      tips: [['Balanced meals','Aim for varied, satisfying food without skipping meals.'],['Active lifestyle','Choose enjoyable movement and allow time for recovery.'],['Individual needs','A qualified professional can help decide whether any weight change is appropriate.']]
+    },
+    'Improve flexibility': {
+      summary: 'Balanced nourishment and hydration can support mobility work, movement and recovery.',
+      tips: [['Regular meals','Eat enough throughout the day.'],['Variety','Include protein, carbohydrates, fats and produce.'],['Recovery','Hydrate and allow time for rest.']]
+    },
+    'Stay active': {
+      summary: 'Eat regular, varied meals to support an active everyday routine.',
+      tips: [['Steady energy','Choose meals and snacks that fit your activities.'],['Variety','Include all major food groups.'],['Hydrate','Drink fluids throughout the day.']]
+    }
+  };
+  const info = library[goal] || library['General fitness'];
+  const summary = document.getElementById('nutrition-goal-summary');
+  const tips = document.getElementById('nutrition-goal-tips');
+  if (summary) summary.textContent = info.summary;
+  if (tips) {
+    for (const [title, detail] of info.tips) {
+      const item = document.createElement('div');
+      item.className = 'nutrition-goal-tip';
+      const heading = document.createElement('strong');
+      heading.textContent = title;
+      item.append(heading,document.createTextNode(detail));
+      tips.append(item);
+    }
+  }
 })();
 </script>
 {% endblock %}
