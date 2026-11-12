@@ -538,6 +538,39 @@ async def food_reference(request:Request, q:str):
                     if len(rows)>=5:break
     except (httpx.HTTPError,ValueError,TypeError):
         logging.warning('Open Food Facts photo food reference unavailable, trying USDA fallback')
+    if not rows and len(query)>=3 and ' ' not in query:
+        # Brand-focused fallback: a search for 'lays' should find branded
+        # products even when the legacy full-text endpoint returns no rows.
+        try:
+            async with httpx.AsyncClient(timeout=8.0, follow_redirects=False) as client:
+                branded=await client.get('https://world.openfoodfacts.org/api/v2/search',
+                    params={'brands_tags':('lay-s|lays' if query in ('lays',"lay's") else query.replace("'",'')),'page_size':20,
+                            'fields':'code,product_name,product_name_en,brands,nutriments'},
+                    headers={'User-Agent':'SmartFitEducation/1.0 (nartajtemirbek@gmail.com)',
+                             'Accept':'application/json'})
+                if branded.status_code==200:
+                    payload=branded.json()
+                    for p in payload.get('products',[]) if isinstance(payload.get('products'),list) else []:
+                        if not isinstance(p,dict):continue
+                        code=str(p.get('code') or '')
+                        if not (code.isascii() and code.isdigit() and 8<=len(code)<=14):continue
+                        name=str(p.get('product_name_en') or p.get('product_name') or '').strip()
+                        if not name:continue
+                        n=p.get('nutriments') if isinstance(p.get('nutriments'),dict) else {}
+                        energy=number(n.get('energy-kcal_100g'))
+                        if energy is None:
+                            kj=number(n.get('energy-kj_100g'))
+                            if kj is not None:energy=round(kj/4.184,1)
+                        macros={'calories':energy,'protein':number(n.get('proteins_100g')),
+                                'fat':number(n.get('fat_100g')),'carbohydrates':number(n.get('carbohydrates_100g'))}
+                        if not any(v is not None for v in macros.values()):continue
+                        rows.append({'name':name[:140],'brand':str(p.get('brands') or '')[:70],
+                                     'per100g':macros,
+                                     'source_url':'https://world.openfoodfacts.org/product/'+code,
+                                     'source':'Open Food Facts'})
+                        if len(rows)>=8:break
+        except (httpx.HTTPError,ValueError,TypeError):
+            logging.info('Open Food Facts brand lookup unavailable')
     if not rows:
         # DEMO_KEY is public and free but has strict shared rate limits (30/hour, 50/day).
         # For reliability users can optionally configure their own free USDA_FDC_API_KEY on Render.
