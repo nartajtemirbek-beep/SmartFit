@@ -71,6 +71,10 @@ def plan_for(profile, variant=0):
     experience = profile["experience"] if profile["experience"] in ACTIVITIES[equipment] else "Beginner"
     variant = int(variant) % len(PLAN_NAMES)
     options = ACTIVITIES[equipment][experience]
+    try:
+        goal = str(profile["fitness_goal"])
+    except (KeyError, IndexError, TypeError):
+        goal = "General fitness"
     schedule = []
     for i in range(days):
         if i in (3, 6):
@@ -83,6 +87,17 @@ def plan_for(profile, variant=0):
             exercises = options[which][:]
             if i in (4, 5):
                 exercises[-1] = "Gentle stretching" if i == 5 else "Comfortable walk"
+            if goal == "Improve endurance":
+                focus = "Stamina and movement"
+                exercises[-1] = "Comfortable walk or easy cycling" if i % 2 else "Steady walk with breaks"
+            elif goal == "Build strength":
+                focus = "Strength and movement skills"
+            elif goal == "Aesthetics":
+                focus = "Balanced strength and technique"
+            elif goal == "Weight management":
+                focus = "Everyday movement and wellbeing"
+                exercises[-1] = "Comfortable walk"
+            # General fitness keeps the balanced training variation.
         schedule.append({"day": f"Day {i+1}", "focus": focus, "exercises": exercises})
     return schedule
 

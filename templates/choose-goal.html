@@ -1,0 +1,66 @@
+{% extends 'base.html' %}{% block content %}
+<section class="goal-onboarding" aria-labelledby="goal-title">
+  <div class="goal-wrap">
+    <header class="goal-head">
+      <a href="/dashboard" class="goal-brand" aria-label="SmartFit">S <span>SmartFit</span></a>
+      <div class="goal-step">01 <span>/</span> 02 &nbsp; · &nbsp; YOUR GOAL</div>
+    </header>
+    <div class="goal-intro"><div class="goal-overline">BUILT AROUND YOU</div><h1 id="goal-title">What moves you?</h1>
+      <p>Choose a focus for your training. You can change it whenever you want.</p>
+    </div>
+    <form action="/choose-goal" method="post" class="goal-form">
+      <input type="hidden" name="token" value="{{csrf}}">
+      <div class="goal-grid">
+        {% for g in [
+        ('Build strength','STRENGTH','Develop strength and movement skills.'),
+        ('Improve endurance','ENDURANCE','Build stamina through consistent activity.'),
+        ('Aesthetics','AESTHETICS','Follow a balanced training routine.'),
+        ('General fitness','GENERAL FITNESS','Stay active with varied workouts.'),
+        ('Weight management','WEIGHT MANAGEMENT','Build sustainable activity habits.')
+        ] %}
+          <label class="goal-card">
+            <input type="radio" name="fitness_goal" value="{{g[0]}}" {% if selected == g[0] %}checked{% endif %} required>
+            <span class="goal-cover goal-cover-{{loop.index}}" aria-hidden="true"></span>
+            <span class="goal-overlay" aria-hidden="true"></span>
+            <span class="goal-check" aria-hidden="true">✓</span>
+            <span class="goal-copy"><span class="goal-number">0{{loop.index}}</span><strong>{{g[1]}}</strong><span class="goal-info">{{g[2]}}</span></span>
+          </label>
+        {% endfor %}
+      </div>
+      <div class="goal-bottom"><p>Start with what matters to you. There is no wrong choice.</p><button type="submit" class="goal-next">CONTINUE <span aria-hidden="true">→</span></button></div>
+    </form>
+  </div>
+</section>
+<style>
+body.logged-in:has(.goal-onboarding) .sidebar,body.logged-in:has(.goal-onboarding) .topbar,body.logged-in:has(.goal-onboarding) footer{display:none!important}
+body.logged-in:has(.goal-onboarding) .app-shell{margin:0!important;min-height:100vh!important}
+body.logged-in:has(.goal-onboarding) .page-content{padding:0!important;max-width:none!important;width:100%!important}
+.goal-onboarding{min-height:100vh;min-height:100svh;background:radial-gradient(ellipse at 70% 0%,#28191e 0,transparent 48%),#101115;color:#fff;padding:32px clamp(16px,4vw,56px) 56px}
+.goal-wrap{max-width:1480px;margin:auto}
+.goal-head,.goal-bottom{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.goal-head{padding-bottom:72px}.goal-brand{color:#f26175;text-decoration:none;font-size:25px;font-weight:900;letter-spacing:-2px}.goal-brand span{color:#fff;letter-spacing:-1px;font-size:19px;margin-left:4px}
+.goal-step,.goal-overline{font-size:12px;letter-spacing:2px;color:#f0808f;font-weight:800}.goal-step span{color:#60616a}
+.goal-intro{margin-bottom:32px}.goal-intro h1{font-weight:850;font-size:clamp(40px,6vw,75px);letter-spacing:-2.8px;line-height:1.08;margin:12px 0}.goal-intro p{color:#b9bac3;font-size:16px;line-height:1.5;margin:0}
+.goal-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px}
+.goal-card{height:clamp(270px,32vw,410px);min-width:0;display:block;position:relative;cursor:pointer;border:2px solid #38373c;overflow:hidden;border-radius:17px;background:#1b1c22;isolation:isolate;transition:transform .2s,border-color .2s,box-shadow .2s}
+.goal-card:hover{transform:translateY(-5px);border-color:#a67b84}.goal-card:has(input:checked){border-color:#f15d73;box-shadow:0 0 0 2px #f15d7370,0 15px 35px #0007}
+.goal-card:has(input:focus-visible){outline:3px solid #fff;outline-offset:4px}
+.goal-card input{position:absolute;opacity:0;width:1px;height:1px;top:0;left:0}
+.goal-cover,.goal-overlay{position:absolute;inset:0;display:block;z-index:-1}
+.goal-cover{background-image:url('/static/img/smartfit-goals.webp');background-repeat:no-repeat;background-size:500% 100%;filter:saturate(.88);transition:transform .4s ease}
+.goal-card:hover .goal-cover{transform:scale(1.04)}
+.goal-cover-1{background-position:0% center}.goal-cover-2{background-position:25% center}.goal-cover-3{background-position:50% center}.goal-cover-4{background-position:75% center}.goal-cover-5{background-position:100% center}
+.goal-overlay{background:linear-gradient(0deg,#09090deF 0%,#09090da8 20%,#0b0b1020 65%,#0b0b1025 100%)}
+.goal-check{position:absolute;right:14px;top:14px;display:grid;place-items:center;width:31px;height:31px;border-radius:50%;border:1px solid #fff8;background:#e95267;color:white;opacity:0;transform:scale(.7);transition:.2s;font-weight:bold}
+.goal-card:has(input:checked) .goal-check{opacity:1;transform:scale(1)}
+.goal-copy{position:absolute;bottom:0;left:0;right:0;padding:20px 16px 21px;display:flex;flex-direction:column;gap:8px}
+.goal-number{font-size:11px;letter-spacing:2px;color:#ff8d9b;font-weight:800}
+.goal-copy strong{font-size:clamp(16px,1.5vw,23px);line-height:1.14;letter-spacing:-.3px}
+.goal-info{color:#e0dce1;font-size:12px;line-height:1.5}
+.goal-bottom{margin-top:29px}.goal-bottom p{color:#a8a8b1;font-size:13px}.goal-next{display:flex;align-items:center;justify-content:space-between;gap:38px;min-width:210px;border:0;border-radius:11px;background:#e95368;color:white;padding:18px 24px;font-size:13px;font-weight:850;letter-spacing:1px;cursor:pointer}
+.goal-next:hover{background:#ff6b80}.goal-next:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@media(max-width:1100px){.goal-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.goal-card{height:330px}.goal-head{padding-bottom:45px}}
+@media(max-width:650px){.goal-onboarding{padding:23px 16px 35px}.goal-head{padding-bottom:38px}.goal-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}.goal-card{height:270px}.goal-card:last-child{grid-column:1/-1;height:220px}.goal-copy{padding:13px}.goal-copy strong{font-size:17px}.goal-bottom{flex-direction:column;align-items:stretch;gap:8px}.goal-next{justify-content:center}}
+@media(prefers-reduced-motion:reduce){.goal-card,.goal-cover,.goal-check{transition:none!important}}
+</style>
+{% endblock %}
