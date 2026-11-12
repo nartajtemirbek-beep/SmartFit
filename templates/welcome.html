@@ -52,6 +52,14 @@ body.guest:has(.sf-welcome) .app-shell,body.guest:has(.sf-welcome) .page-content
 .sf-welcome-secondary{background:#10131175;color:#fff;backdrop-filter:blur(5px)}
 .sf-welcome-secondary:hover{background:#ffffff24}
 .sf-welcome-footer{padding:0 clamp(24px,5vw,80px) 28px;animation:sf-fade .8s 2.3s both}
+.sf-welcome.sf-resetting .sf-welcome-photo,
+.sf-welcome.sf-resetting .sf-welcome-header,
+.sf-welcome.sf-resetting .sf-welcome-kicker,
+.sf-welcome.sf-resetting .sf-welcome-line,
+.sf-welcome.sf-resetting .sf-welcome-line em,
+.sf-welcome.sf-resetting .sf-welcome-description,
+.sf-welcome.sf-resetting .sf-welcome-actions,
+.sf-welcome.sf-resetting .sf-welcome-footer{animation:none!important}
 .sf-welcome:not(.sf-started) .sf-welcome-photo,
 .sf-welcome:not(.sf-started) .sf-welcome-header,
 .sf-welcome:not(.sf-started) .sf-welcome-kicker,
@@ -94,9 +102,13 @@ body.guest:has(.sf-welcome) .app-shell,body.guest:has(.sf-welcome) .page-content
     setTimeout(begin, 2400);
   }
   replay?.addEventListener('click', () => {
+    root.classList.add('sf-resetting');
     root.classList.remove('sf-started');
     void root.offsetWidth;
-    requestAnimationFrame(() => requestAnimationFrame(start));
+    requestAnimationFrame(() => {
+      root.classList.remove('sf-resetting');
+      requestAnimationFrame(start);
+    });
   });
 })();
 </script>
