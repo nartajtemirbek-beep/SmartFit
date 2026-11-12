@@ -184,7 +184,7 @@ def signup(request:Request,email:str=Form(...),password:str=Form(...),confirm:st
         if c.execute('SELECT id FROM accounts WHERE email=?',(email,)).fetchone():return safe_error('This email is already registered.')
         cur=c.execute('INSERT INTO accounts(email,password_hash) VALUES (?,?)',(email,hasher.hash(password)))
         request.session.clear();request.session['uid']=cur.lastrowid
-    return go('/profile')
+    return go('/choose-goal')
 
 @app.post('/login')
 def login(request:Request,email:str=Form(...),password:str=Form(...),token:str=Form(...)):
@@ -222,11 +222,28 @@ async def google_callback(request:Request):
     request.session.clear();request.session['uid']=user
     return go('/dashboard')
 
+@app.get('/choose-goal',response_class=HTMLResponse)
+def choose_goal(request:Request):
+    user=require_login(request)
+    with db() as c:
+        profile=c.execute('SELECT fitness_goal FROM profiles WHERE user_id=?',(user,)).fetchone()
+    selected=request.session.get('selected_goal') or (profile['fitness_goal'] if profile else '')
+    return render(request,'choose-goal.html',selected=selected)
+
+@app.post('/choose-goal')
+def save_selected_goal(request:Request,token:str=Form(...),fitness_goal:str=Form(...)):
+    require_login(request);require_csrf(request,token)
+    if fitness_goal not in ('Build strength','Improve endurance','Aesthetics','General fitness','Weight management'):
+        raise HTTPException(400,'Please select a goal')
+    request.session['selected_goal']=fitness_goal
+    return go('/profile')
+
 @app.get('/profile',response_class=HTMLResponse)
 def profile(request:Request):
     user=require_login(request)
     with db() as c:p=c.execute('SELECT * FROM profiles WHERE user_id=?',(user,)).fetchone()
-    return render(request,'profile.html',p=p)
+    if not p and not request.session.get('selected_goal'):return go('/choose-goal')
+    return render(request,'profile.html',p=p,selected_goal=request.session.get('selected_goal') or (p['fitness_goal'] if p else 'General fitness'))
 
 @app.post('/profile')
 def save_profile(request:Request,token:str=Form(...),display_name:str=Form(...),age:int=Form(...),height_cm:float=Form(...),current_weight_kg:float=Form(...),target_weight_kg:str=Form(''),fitness_goal:str=Form(...),experience:str=Form(...),training_days:int=Form(...),equipment:str=Form(...)):
@@ -236,12 +253,13 @@ def save_profile(request:Request,token:str=Form(...),display_name:str=Form(...),
         try:target=float(target_weight_kg)
         except ValueError:raise HTTPException(400,'Invalid target weight')
     if not (13<=age<=110 and 100<=height_cm<=250 and 20<=current_weight_kg<=350 and (target is None or 20<=target<=350) and 1<=training_days<=7 and 1<=len(display_name.strip())<=60):raise HTTPException(400,'Please check your profile values')
-    if fitness_goal not in ('General fitness','Build strength','Improve endurance','Improve flexibility','Stay active'):raise HTTPException(400,'Invalid goal')
+    if fitness_goal not in ('General fitness','Build strength','Improve endurance','Improve flexibility','Stay active','Aesthetics','Weight management'):raise HTTPException(400,'Invalid goal')
     if experience not in ('Beginner','Intermediate','Advanced') or equipment not in ('Home','Gym','No equipment'):raise HTTPException(400,'Invalid selection')
     with db() as c:
         prev=c.execute('SELECT current_weight_kg FROM profiles WHERE user_id=?',(user,)).fetchone()
         c.execute('''INSERT INTO profiles(user_id,display_name,age,height_cm,current_weight_kg,target_weight_kg,fitness_goal,experience,training_days,equipment) VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET display_name=excluded.display_name,age=excluded.age,height_cm=excluded.height_cm,current_weight_kg=excluded.current_weight_kg,target_weight_kg=excluded.target_weight_kg,fitness_goal=excluded.fitness_goal,experience=excluded.experience,training_days=excluded.training_days,equipment=excluded.equipment,updated_at=CURRENT_TIMESTAMP''',(user,display_name.strip(),age,height_cm,current_weight_kg,target,fitness_goal,experience,training_days,equipment))
         if not prev or prev['current_weight_kg']!=current_weight_kg:c.execute('INSERT INTO weight_history(user_id,weight_kg) VALUES (?,?)',(user,current_weight_kg))
+    request.session.pop('selected_goal',None)
     return go('/dashboard')
 
 @app.get('/dashboard',response_class=HTMLResponse)
@@ -249,7 +267,7 @@ def dashboard(request:Request):
     user=require_login(request)
     with db() as c:
         p=c.execute('SELECT * FROM profiles WHERE user_id=?',(user,)).fetchone()
-        if not p:return go('/profile')
+        if not p:return go('/choose-goal')
         history=c.execute('SELECT weight_kg,recorded_at FROM weight_history WHERE user_id=? ORDER BY id DESC LIMIT 20',(user,)).fetchall()
         sessions=c.execute('SELECT * FROM workout_sessions WHERE user_id=? ORDER BY completed_on DESC,id DESC LIMIT 30',(user,)).fetchall()
         reminders=c.execute('SELECT * FROM reminders WHERE user_id=? AND completed=0 ORDER BY remind_on LIMIT 20',(user,)).fetchall()
