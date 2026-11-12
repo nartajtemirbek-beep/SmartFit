@@ -4,7 +4,7 @@
   <div class="sf-welcome-shade" aria-hidden="true"></div>
   <header class="sf-welcome-header">
     <a class="sf-welcome-brand" href="/" aria-label="SmartFit home"><span class="sf-welcome-brand-mark">S</span><span>Smart<span class="sf-welcome-accent">Fit</span></span></a>
-    <button class="sf-replay" type="button" aria-label="Replay welcome animation">↻ <span>REPLAY INTRO</span></button>
+    <span class="sf-welcome-header-note">YOUR FITNESS SPACE</span>
   </header>
   <div class="sf-welcome-copy">
     <p class="sf-welcome-kicker">MOVE WITH PURPOSE <span aria-hidden="true">/</span> GROW YOUR WAY</p>
@@ -31,8 +31,7 @@ body.guest:has(.sf-welcome) .app-shell,body.guest:has(.sf-welcome) .page-content
 .sf-welcome-brand-mark{display:grid;place-items:center;width:40px;height:40px;border:1px solid #fd777f77;background:#eb5063;color:white;border-radius:12px;font-size:24px}
 .sf-welcome-accent{color:#f16a7b}
 .sf-welcome-header-note,.sf-welcome-footer{font-size:11px;font-weight:750;letter-spacing:2px;color:#d9dfd9}
-.sf-replay{border:1px solid #ffffff65;background:#1117;color:#fff;border-radius:999px;padding:11px 15px;font-size:11px;font-weight:750;letter-spacing:1.3px;cursor:pointer;transition:background .2s}
-.sf-replay:hover{background:#ffffff30}.sf-replay:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
 .sf-welcome-copy{width:min(710px,calc(100% - 48px));margin:auto auto auto clamp(24px,7vw,110px);padding:40px 0 72px;text-align:left}
 .sf-welcome-kicker{margin:0 0 27px;color:#ff9da9;font-size:12px;font-weight:850;letter-spacing:3px;animation:sf-rise .85s .25s both}
 .sf-welcome-kicker span{color:white;margin:0 12px}
@@ -52,14 +51,6 @@ body.guest:has(.sf-welcome) .app-shell,body.guest:has(.sf-welcome) .page-content
 .sf-welcome-secondary{background:#10131175;color:#fff;backdrop-filter:blur(5px)}
 .sf-welcome-secondary:hover{background:#ffffff24}
 .sf-welcome-footer{padding:0 clamp(24px,5vw,80px) 28px;animation:sf-fade .8s 2.3s both}
-.sf-welcome.sf-resetting .sf-welcome-photo,
-.sf-welcome.sf-resetting .sf-welcome-header,
-.sf-welcome.sf-resetting .sf-welcome-kicker,
-.sf-welcome.sf-resetting .sf-welcome-line,
-.sf-welcome.sf-resetting .sf-welcome-line em,
-.sf-welcome.sf-resetting .sf-welcome-description,
-.sf-welcome.sf-resetting .sf-welcome-actions,
-.sf-welcome.sf-resetting .sf-welcome-footer{animation:none!important}
 .sf-welcome:not(.sf-started) .sf-welcome-photo,
 .sf-welcome:not(.sf-started) .sf-welcome-header,
 .sf-welcome:not(.sf-started) .sf-welcome-kicker,
@@ -76,13 +67,12 @@ body.guest:has(.sf-welcome) .app-shell,body.guest:has(.sf-welcome) .page-content
 @keyframes sf-scene{from{opacity:.5;transform:scale(1.08)}to{opacity:1;transform:scale(1)}}
 @media(min-width:1450px){.sf-welcome-copy{margin-left:max(7vw,calc((100vw - 1450px)/2))}}
 @media(max-width:800px){.sf-welcome-photo{background-position:62% center}.sf-welcome-shade{background:linear-gradient(0deg,rgba(5,9,7,.92) 0%,rgba(5,9,7,.68) 46%,rgba(5,9,7,.13) 100%)}.sf-welcome-copy{width:calc(100% - 48px);margin:auto 24px 6vh;text-align:left;padding:75px 0 25px}.sf-welcome-copy h1{font-size:clamp(43px,9.2vw,76px);letter-spacing:.5px}.sf-welcome-description{margin:23px 0}.sf-welcome-header-note{font-size:9px;letter-spacing:1px}}
-@media(max-width:440px){.sf-welcome-header{padding:22px 20px}.sf-replay span{display:none}.sf-replay{font-size:21px;padding:6px 13px}.sf-welcome-header-note{display:none}.sf-welcome-copy{width:calc(100% - 40px);margin-left:20px;margin-right:20px}.sf-welcome-copy h1{font-size:clamp(39px,10vw,52px);letter-spacing:0}.sf-welcome-kicker{font-size:10px;letter-spacing:1.5px}.sf-welcome-actions{gap:10px}.sf-welcome-button{min-height:54px;padding:14px;font-size:12px}.sf-welcome-footer{padding:0 20px 22px;font-size:9px;letter-spacing:1px}}
+@media(max-width:440px){.sf-welcome-header{padding:22px 20px}.sf-welcome-header-note{display:none}.sf-welcome-copy{width:calc(100% - 40px);margin-left:20px;margin-right:20px}.sf-welcome-copy h1{font-size:clamp(39px,10vw,52px);letter-spacing:0}.sf-welcome-kicker{font-size:10px;letter-spacing:1.5px}.sf-welcome-actions{gap:10px}.sf-welcome-button{min-height:54px;padding:14px;font-size:12px}.sf-welcome-footer{padding:0 20px 22px;font-size:9px;letter-spacing:1px}}
 @media(prefers-reduced-motion:reduce){.sf-welcome *, .sf-welcome *::before,.sf-welcome *::after{animation:none!important;transition:none!important}.sf-welcome-photo{transform:none;will-change:auto}.sf-welcome-line em{opacity:1;filter:none}}
 </style>
 <script>
 (() => {
   const root = document.querySelector('.sf-welcome');
-  const replay = root?.querySelector('.sf-replay');
   if (!root) return;
   const start = () => root.classList.add('sf-started');
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -101,15 +91,6 @@ body.guest:has(.sf-welcome) .app-shell,body.guest:has(.sf-welcome) .page-content
     if (photo.complete) begin();
     setTimeout(begin, 2400);
   }
-  replay?.addEventListener('click', () => {
-    root.classList.add('sf-resetting');
-    root.classList.remove('sf-started');
-    void root.offsetWidth;
-    requestAnimationFrame(() => {
-      root.classList.remove('sf-resetting');
-      requestAnimationFrame(start);
-    });
-  });
 })();
 </script>
 {% endblock %}
