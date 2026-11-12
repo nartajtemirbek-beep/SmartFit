@@ -493,7 +493,7 @@ async def food_reference(request:Request, q:str):
     require_login(request)
     import re, time, httpx
     query=' '.join(q.lower().replace('_',' ').strip().split())
-    if not (2 <= len(query) <= 65) or not re.fullmatch(r'[a-z0-9 .-]+',query):
+    if not (2 <= len(query) <= 65) or not re.fullmatch(r"[\w .,'()/-]+",query,flags=re.UNICODE):
         raise HTTPException(400,'Invalid food name')
     now=time.monotonic()
     cached=_FOOD_REF_CACHE.get(query)
@@ -510,9 +510,9 @@ async def food_reference(request:Request, q:str):
     # The USDA FoodData Central public API is an independent free fallback.
     try:
         async with httpx.AsyncClient(timeout=9.0,follow_redirects=False) as client:
-            r=await client.get('https://world.openfoodfacts.org/api/v2/search',
-                params={'categories_tags_en':query.replace(' ','-'),'page_size':25,
-                        'fields':'code,product_name,product_name_en,brands,nutriments'},
+            r=await client.get('https://world.openfoodfacts.org/cgi/search.pl',
+                params={'search_terms':query,'search_simple':1,'action':'process','json':1,
+                        'page_size':25,'fields':'code,product_name,product_name_en,brands,nutriments'},
                 headers={'User-Agent':'SmartFitEducation/1.0 (nartajtemirbek@gmail.com)','Accept':'application/json'})
             if r.status_code==200:
                 payload=r.json()
