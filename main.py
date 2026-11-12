@@ -577,7 +577,11 @@ async def food_reference(request:Request, q:str):
     return JSONResponse({'items':rows,'query':query})
 
 @app.get('/meal',response_class=HTMLResponse)
-def meal_page(request:Request):require_login(request);return render(request,'meal.html',result=None,error=None)
+def meal_page(request:Request):
+    user=require_login(request)
+    with db() as c:
+        profile=c.execute('SELECT age,height_cm,current_weight_kg,fitness_goal,training_days FROM profiles WHERE user_id=?',(user,)).fetchone()
+    return render(request,'meal.html',result=None,error=None,nutrition_profile=dict(profile) if profile else None)
 
 @app.post('/meal',response_class=HTMLResponse)
 async def meal_scan(request:Request,token:str=Form(...),photo:UploadFile=File(...)):

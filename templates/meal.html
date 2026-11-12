@@ -5,6 +5,39 @@
   <h1>Food Scanner</h1>
   <p>Photo recognition with CLIP and a local everyday-food catalog, plus packaged-product barcode lookup. No paid AI keys needed.</p>
 </div>
+<section class="panel nutrition-panel daily-nutrition-panel" aria-labelledby="daily-nutrition-title">
+  <div class="nutrition-section-title"><span class="nutrition-section-icon">00</span><div>
+    <h2 id="daily-nutrition-title">Daily Nutrition Overview</h2>
+    <p class="muted">Nutrition information tailored to your stage of life and training preferences.</p>
+  </div></div>
+  {% if not nutrition_profile %}
+    <p class="muted">Complete your training profile to see your nutrition overview.</p><a class="btn secondary" href="/profile">Complete profile →</a>
+  {% elif nutrition_profile.age < 18 %}
+    <div class="daily-guide-note"><strong>Fuel your training and growth</strong>
+      <p>Your body needs enough food for everyday life, activity and development. Aim for regular, varied meals and include carbohydrates, protein sources, fats, fruits or vegetables and fluids.</p>
+      <p>SmartFit does not automatically set calorie or macro limits for people under 18. A qualified healthcare professional can help with individual needs.</p>
+    </div>
+  {% else %}
+    <p class="muted">Your profile: {{ nutrition_profile.height_cm|round|int }} cm · {{ nutrition_profile.current_weight_kg|round(1) }} kg · {{ nutrition_profile.fitness_goal }}. Body-fat estimates are optional to know in real life, but this particular calculation needs an estimate.</p>
+    <div class="daily-guide-controls" id="adult-nutrition-guide" data-weight="{{ nutrition_profile.current_weight_kg }}" data-age="{{ nutrition_profile.age }}">
+      <label>Estimated body fat (%) <input id="daily-body-fat" type="number" min="5" max="60" step="0.5" inputmode="decimal" placeholder="Optional to share or store"></label>
+      <label>Typical overall activity
+        <select id="daily-activity"><option value="1.2">Mostly sedentary</option><option value="1.4" selected>Lightly active</option><option value="1.6">Moderately active</option><option value="1.75">Very active</option></select>
+      </label>
+      <button id="daily-estimate" class="btn primary" type="button">Estimate daily KБЖУ</button>
+    </div>
+    <div class="daily-estimate-output" id="daily-estimate-output" hidden aria-live="polite">
+      <h3>Illustrative daily maintenance estimate</h3>
+      <div class="daily-macro-grid">
+        <div><small>Energy</small><strong id="daily-energy">—</strong><small>kcal/day</small></div>
+        <div><small>Protein</small><strong id="daily-protein">—</strong><small>g/day</small></div>
+        <div><small>Fat</small><strong id="daily-fat">—</strong><small>g/day</small></div>
+        <div><small>Carbs</small><strong id="daily-carbs">—</strong><small>g/day</small></div>
+      </div>
+    </div>
+    <p class="muted nutrition-note" id="daily-guide-explanation">For adults only. Uses a lean-body-mass formula and a self-selected activity factor. Height and training goal provide context but do not enter this formula. The macro proportions are an illustration, not medical advice or a target to restrict food intake. Body-fat estimates can be inaccurate; nothing is stored.</p>
+  {% endif %}
+</section>
 <section class="panel nutrition-panel" aria-labelledby="food-scanner-title">
   <div class="nutrition-section-title"><span class="nutrition-section-icon">01</span><div><h2 id="food-scanner-title">AI Photo — Common Foods</h2><p class="muted">Free CLIP model compares your image to 73 everyday foods, including rice, buckwheat, chicken, eggs and potatoes. Pick the correct foods before viewing reference nutrition.</p></div></div>
   <label for="food-photo">Meal photo (JPG, PNG, WebP — max 15 MB)</label>
@@ -60,6 +93,19 @@
   <p class="muted nutrition-note">Camera barcode detection is supported only in some browsers. Manual code entry works even when camera scanning is unavailable.</p>
 </section>
 <style>
+.daily-guide-note{background:linear-gradient(135deg,#302630,#202128);border:1px solid #4d3944;border-radius:14px;padding:18px 20px;line-height:1.65}
+.daily-guide-note strong{color:#ffd6df;font-size:17px}.daily-guide-note p{margin:10px 0;color:#ddd7df}
+.daily-guide-controls{display:grid;grid-template-columns:minmax(160px,1fr) minmax(160px,1fr) auto;gap:14px;align-items:end}
+.daily-guide-controls label{font-weight:650;font-size:13px;color:#dfdce4}
+.daily-guide-controls input,.daily-guide-controls select{display:block;margin-top:8px;min-height:45px;width:100%;background:#121219;color:#fff;border:1px solid #51414d;border-radius:10px;padding:9px 12px}
+.daily-guide-controls button{min-height:45px}
+.daily-estimate-output{margin-top:18px}.daily-estimate-output[hidden]{display:none!important}
+.daily-estimate-output h3{font-size:18px;margin-bottom:14px}
+.daily-macro-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.daily-macro-grid>div{display:flex;flex-direction:column;gap:7px;padding:18px 13px;background:#24212b;border:1px solid #473342;border-radius:12px}
+.daily-macro-grid small{color:#bcb5c4;font-size:12px}
+.daily-macro-grid strong{font-size:clamp(19px,2.4vw,28px);color:#fff;font-variant-numeric:tabular-nums}
+@media(max-width:750px){.daily-guide-controls{grid-template-columns:1fr}.daily-macro-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .nutrition-intro{max-width:850px}
 .nutrition-panel{max-width:970px;padding:clamp(20px,3vw,32px)}
 .nutrition-section-title{display:flex;align-items:start;gap:15px;margin:0 0 22px}
@@ -117,4 +163,38 @@
 </style>
 <script type="module" src="/static/js/general-food-scanner.js?v=5"></script>
 <script defer src="/static/js/barcode-scanner.js?v=3"></script>
+<script>
+(() => {
+  const guide = document.getElementById('adult-nutrition-guide');
+  if (!guide) return;
+  const button = document.getElementById('daily-estimate');
+  const output = document.getElementById('daily-estimate-output');
+  const explanation = document.getElementById('daily-guide-explanation');
+  button.addEventListener('click', () => {
+    const weight = Number(guide.dataset.weight);
+    const age = Number(guide.dataset.age);
+    const bodyFat = Number(document.getElementById('daily-body-fat').value);
+    const activity = Number(document.getElementById('daily-activity').value);
+    if (age < 18 || !Number.isFinite(weight) || weight <= 0 || !Number.isFinite(bodyFat) || bodyFat < 5 || bodyFat > 60 || !Number.isFinite(activity)) {
+      output.hidden = true;
+      explanation.textContent = 'Enter a body-fat estimate between 5% and 60% to view an illustrative estimate. It does not need to be saved.';
+      return;
+    }
+    const leanMass = weight * (1 - bodyFat/100);
+    const energy = Math.round((370 + 21.6*leanMass)*activity / 25)*25;
+    const macros = {
+      energy,
+      protein: Math.round((energy * .20 / 4)/5)*5,
+      fat: Math.round((energy * .30 / 9)/5)*5,
+      carbs: Math.round((energy * .50 / 4)/5)*5
+    };
+    document.getElementById('daily-energy').textContent = macros.energy.toLocaleString('en-US');
+    document.getElementById('daily-protein').textContent = macros.protein;
+    document.getElementById('daily-fat').textContent = macros.fat;
+    document.getElementById('daily-carbs').textContent = macros.carbs;
+    output.hidden = false;
+    explanation.textContent = 'Adult maintenance illustration only (Katch–McArdle + activity factor; 20% protein, 30% fat, 50% carbs). Not a weight-loss or weight-gain prescription. Your goal and height do not directly alter this equation. Measurements and actual needs vary; values are not saved.';
+  });
+})();
+</script>
 {% endblock %}
