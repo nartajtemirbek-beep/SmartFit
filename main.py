@@ -13,7 +13,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from pwdlib import PasswordHash
 from authlib.integrations.starlette_client import OAuth
 from hybrid_coach import classify_coach_intent, create_workout_plan, analyze_workout_progress
-from workout_variations import plan_for, next_variant, PLAN_NAMES
+from workout_variations import plan_for, next_variant, PLAN_NAMES, ACTIVITIES, EASY_DAY
 
 ROOT=Path(__file__).resolve().parent
 DB_PATH=Path(os.environ.get('SMARTFIT_DB_PATH',str(ROOT/'smartfit_private.db')))
@@ -652,6 +652,16 @@ def dashboard_context(request):
                 plan_variant=(int(plan['title'].rsplit(' ',1)[1]) if plan and plan['title'].startswith('SmartFit Variation ') and plan['title'].rsplit(' ',1)[1].isdigit() else 0),
                 total=total,thisweek=thisweek,today=today.isoformat(),calendar_title=today.strftime('%B %Y'),
                 calendar_cells=cells,achievements=achievements)
+
+@app.get('/exercise-library',response_class=HTMLResponse)
+def exercise_library_page(request:Request):
+    require_login(request)
+    # Generate the catalog from actual exercises used by Workout Plan.
+    names={exercise for levels in ACTIVITIES.values() for sessions in levels.values()
+           for exercises in sessions for exercise in exercises}
+    names.update(EASY_DAY)
+    catalog=sorted(names,key=str.casefold)
+    return render(request,'exercise_library.html',exercises=catalog)
 
 @app.get('/workout-plan',response_class=HTMLResponse)
 def workout_plan_page(request:Request):
