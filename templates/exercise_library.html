@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="sf-library-head">
+  <div>
+    <span class="eyebrow">LEARN THE MOVEMENTS</span>
+    <h1>Exercise Library</h1>
+    <p>Find movement guidance for the exercises used in your SmartFit plans. We link to <a class="textlink" href="https://www.youtube.com/@officialdemic" target="_blank" rel="noopener noreferrer">DEMIC on YouTube</a> and embed only individually verified videos.</p>
+  </div>
+</div>
+<div class="sf-library-search">
+  <label for="sf-library-search">Search exercises</label>
+  <input id="sf-library-search" type="search" placeholder="e.g. squat, row, push-up..." autocomplete="off">
+</div>
+<div class="sf-library-filters" id="sf-library-filters" role="group" aria-label="Filter by movement type"></div>
+<section class="sf-library-grid" id="sf-library" aria-label="Exercise tutorials">
+{% for name in exercises %}
+  <article class="sf-exercise-card" data-exercise="{{ name|e }}">
+    <span class="sf-exercise-category" data-sf-category>Exercise</span>
+    <h3>{{ name }}</h3>
+    <p data-sf-tip>Move at a comfortable pace and focus on good technique.</p>
+    <button type="button" class="sf-tutorial-btn" data-sf-tutorial="{{ name|e }}" aria-label="Find video tutorial for {{ name|e }}">▶ Find tutorial</button>
+  </article>
+{% endfor %}
+</section>
+<p class="sf-library-empty" id="sf-library-empty" hidden>No matching exercises. Try another search.</p>
+<p class="sf-library-source">Videos belong to their creators and play through YouTube when embedding is allowed. If no verified match is available, SmartFit directs you to the DEMIC channel.</p>
+{% endblock %}
