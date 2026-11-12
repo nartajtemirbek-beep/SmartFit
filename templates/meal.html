@@ -58,7 +58,7 @@
         <div><small>Carbs</small><strong id="daily-carbs">—</strong><small>g/day</small></div>
       </div>
     </div>
-    <p class="muted nutrition-note" id="daily-guide-explanation">For adults only. Uses a lean-body-mass formula and a self-selected activity factor. Height and training goal provide context but do not enter this formula. The macro proportions are an illustration, not medical advice or a target to restrict food intake. Body-fat estimates can be inaccurate; nothing is stored.</p>
+    <p class="muted nutrition-note" id="daily-guide-explanation">For adults only. Uses a lean-body-mass formula and a self-selected activity factor. Height and training goal provide context but do not enter this formula. The goal-specific macro proportions are an illustration, not medical advice or a target to restrict food intake. Body-fat estimates can be inaccurate; nothing is stored.</p>
   {% endif %}
 </section>
 <section class="panel nutrition-panel" aria-labelledby="food-scanner-title">
@@ -222,18 +222,31 @@
     }
     const leanMass = weight * (1 - bodyFat/100);
     const energy = Math.round((370 + 21.6*leanMass)*activity / 25)*25;
+    // Illustrative distributions, not individualized nutrition prescriptions.
+    // No calorie deficit, mandatory surplus, or low-fat target is assumed.
+    const distributions = {
+      'Build strength': [.25, .30, .45],
+      'Improve endurance': [.20, .25, .55],
+      'Aesthetics': [.25, .30, .45],
+      'General fitness': [.20, .30, .50],
+      'Weight management': [.20, .30, .50],
+      'Improve flexibility': [.20, .30, .50],
+      'Stay active': [.20, .30, .50]
+    };
+    const selectedGoal = document.querySelector('.daily-nutrition-panel')?.dataset.fitnessGoal || 'General fitness';
+    const [proteinPart, fatPart, carbPart] = distributions[selectedGoal] || distributions['General fitness'];
     const macros = {
       energy,
-      protein: Math.round((energy * .20 / 4)/5)*5,
-      fat: Math.round((energy * .30 / 9)/5)*5,
-      carbs: Math.round((energy * .50 / 4)/5)*5
+      protein: Math.round((energy * proteinPart / 4)/5)*5,
+      fat: Math.round((energy * fatPart / 9)/5)*5,
+      carbs: Math.round((energy * carbPart / 4)/5)*5
     };
     document.getElementById('daily-energy').textContent = macros.energy.toLocaleString('en-US');
     document.getElementById('daily-protein').textContent = macros.protein;
     document.getElementById('daily-fat').textContent = macros.fat;
     document.getElementById('daily-carbs').textContent = macros.carbs;
     output.hidden = false;
-    explanation.textContent = 'Adult maintenance illustration only (Katch–McArdle + activity factor; 20% protein, 30% fat, 50% carbs). Not a weight-loss or weight-gain prescription. Your goal and height do not directly alter this equation. Measurements and actual needs vary; values are not saved.';
+    explanation.textContent = 'Adult maintenance illustration (Katch–McArdle + activity factor). For '+selectedGoal+', the educational macro split shown is '+Math.round(proteinPart*100)+'% protein, '+Math.round(fatPart*100)+'% fat and '+Math.round(carbPart*100)+'% carbohydrates. Your fitness goal changes this illustrative split, not the maintenance-calorie estimate. No deficit or surplus is automatically prescribed. Height is not used in this formula. Estimates can be inaccurate and are not saved.';
   });
 })();
 </script>
