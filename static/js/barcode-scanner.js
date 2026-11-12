@@ -14,6 +14,7 @@
   const cameraBox=document.querySelector('#barcode-camera-box');
   const readerElement=document.querySelector('#barcode-camera-reader');
   const scanImage=document.querySelector('#barcode-image');
+  const addToDiary=document.querySelector('#barcode-add-to-diary');
   let nutrients=null;
   let scanner=null;
   let cameraActive=false;
@@ -148,6 +149,15 @@
     event.preventDefault();
     await stopCamera();
     await lookup(codeInput.value);
+  });
+  if(addToDiary)addToDiary.addEventListener('click',()=>{
+    if(!nutrients||!name.textContent.trim())return;
+    const amount=Number(quantity.value);
+    if(!Number.isFinite(amount)||amount<1||amount>10000){message('Enter a valid product amount first.');return;}
+    sessionStorage.setItem('smartfit_food_transfer',JSON.stringify({
+      name:name.textContent.trim(),amount,per100g:nutrients,source:'barcode'
+    }));
+    window.location.href='/food-diary';
   });
   quantity.addEventListener('input',renderNutrition);
   document.addEventListener('visibilitychange',()=>{if(document.hidden&&cameraActive)void stopCamera();});
