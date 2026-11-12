@@ -61,7 +61,7 @@ class PgConnection:
         inserted_key = None
         if is_insert and 'RETURNING ' not in sql.upper():
             # Only INSERT statements need a generated primary key. Never consume SELECT rows.
-            inserted_key = 'user_id' if sql.lstrip().upper().startswith('INSERT INTO PROFILES') else 'id'
+            inserted_key = 'user_id' if sql.lstrip().upper().startswith(('INSERT INTO PROFILES','INSERT INTO NUTRITION_GOALS')) else 'id'
             sql = sql.rstrip().rstrip(';') + ' RETURNING ' + inserted_key
         cur = self.connection.execute(sql.replace('?', '%s'), params)
         return PgResult(cur, inserted_key)
