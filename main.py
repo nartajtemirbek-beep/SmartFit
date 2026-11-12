@@ -544,7 +544,7 @@ async def food_reference(request:Request, q:str):
         try:
             async with httpx.AsyncClient(timeout=8.0, follow_redirects=False) as client:
                 branded=await client.get('https://world.openfoodfacts.org/api/v2/search',
-                    params={'brands_tags':query.replace("'",''),'page_size':20,
+                    params={'brands_tags':('lay-s|lays' if query in ('lays',"lay's") else query.replace("'",'')),'page_size':20,
                             'fields':'code,product_name,product_name_en,brands,nutriments'},
                     headers={'User-Agent':'SmartFitEducation/1.0 (nartajtemirbek@gmail.com)',
                              'Accept':'application/json'})
